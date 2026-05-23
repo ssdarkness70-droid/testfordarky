@@ -4275,18 +4275,11 @@
       }
     }
     static ["handleChat"](_0x4be406) {
-      var _0xhex = [];
+      var _0hex = [];
       for (var _0i = 0; _0i < _0x4be406.dataView.byteLength; _0i++) {
-        _0xhex.push(_0x4be406.dataView.getUint8(_0i).toString(16).padStart(2,'0'));
+        _0hex.push(_0x4be406.dataView.getUint8(_0i).toString(16).padStart(2,'0'));
       }
-      console.log('CHAT86 RAW:', _0xhex.join(' '));
-      var _0s1 = _0x4be406.readStringZeroUtf8();
-      var _0s2 = _0x4be406.readStringZeroUtf8();
-      console.log('S1:', JSON.stringify(_0s1), 'S2:', JSON.stringify(_0s2));
-      _0s1 = _0s1.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\ufffd]/g, '');
-      _0s2 = _0s2.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\ufffd]/g, '');
-      if (_0s2) _0x40f48a.normal(_0s1 || 'Player', _0s2);
-      else if (_0s1) _0x40f48a.alert('Notice', _0s1);
+      _0x40f48a.alert('RAW HEX', _0hex.join(' '));
     }
     static ["worldUpdate"](_0x449cb9, _0x43ee07 = 1) {
       _0xb45f1b.refreshTime();
