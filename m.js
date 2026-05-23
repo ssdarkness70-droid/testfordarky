@@ -702,9 +702,9 @@
       _0x14f7b2("#skin").blur(() => {
         let _0x145a78 = _0x14f7b2('#skin').val();
         if (!_0x386cbc.code2Url(_0x386cbc.getImgurCode(_0x145a78 || '')).includes('XXXXXXX')) {
-          return this.setarbSkin();
+          return this.setSkin(_0x145a78);
         }
-        this.setSkin(_0x14f7b2("#skin").val());
+        this.setarbSkin();
       });
     }
     static ["switch"](_0x5517bb) {
@@ -3225,7 +3225,7 @@
     static set ["skin"](_0x1a9370) {
       const _0x5518a5 = _0x386cbc.getImgurCode(_0x1a9370);
       const _0x356638 = _0x386cbc.getRaindowFlag(_0x1a9370);
-      return _0x5518a5 ? (this.isRGB !== _0x356638 && (this.isRGB = _0x356638, _0x2d5cce.rgbMode()), this._skin = _0x5518a5, void _0x2d5cce.skin()) : void _0x40f48a.alert("Multibox", _0x59f59a.current.notif.invalidSkinUrl);
+      return "XXXXXXX" !== _0x5518a5 && _0x5518a5 ? (this.isRGB !== _0x356638 && (this.isRGB = _0x356638, _0x2d5cce.rgbMode()), this._skin = _0x5518a5, void _0x2d5cce.skin()) : void _0x40f48a.alert("Multibox", _0x59f59a.current.notif.invalidSkinUrl);
     }
     static get ['skin']() {
       return this._skin;
@@ -5247,14 +5247,14 @@
       _0x252d42.src = _0x31eb71;
     }
     static ["getImgurCode"](_0x96fe5e) {
-      const _0x5e0df5 = _0x96fe5e.match(/https?:\/\/i\.imgur\.com\/([\w0-9]{7})\.(png|jpg|gif)/i);
-      return null === _0x5e0df5 ? "XXXXXXX" : _0x5e0df5[1];
+      const _0x5e0df5 = _0x96fe5e.match(/https?:\/\/.+\.(png|jpg|gif|webp)/i);
+      return null === _0x5e0df5 ? "XXXXXXX" : _0x5e0df5[0];
     }
     static ["getRaindowFlag"](_0x4a64ed) {
       return null !== _0x4a64ed.match(/#hue\s??=\s??auto\s??,\s??blend\s??=\s??auto/i);
     }
     static ["code2Url"](_0x4e8aaa) {
-      return "https://i.imgur.com/" + _0x4e8aaa + '.png';
+      return _0x4e8aaa.startsWith("http") ? _0x4e8aaa : "https://i.imgur.com/" + _0x4e8aaa + '.png';
     }
     static ["commands"]() {
       const _0x5b9c43 = this.ctx;
