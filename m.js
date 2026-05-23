@@ -4275,11 +4275,11 @@
       }
     }
     static ["handleChat"](_0x4be406) {
-      var _0hex = [];
-      for (var _0i = 0; _0i < _0x4be406.dataView.byteLength; _0i++) {
-        _0hex.push(_0x4be406.dataView.getUint8(_0i).toString(16).padStart(2,'0'));
-      }
-      _0x40f48a.alert('RAW HEX', _0hex.join(' '));
+      var _0id = _0x4be406.readUInt32();
+      for (var _0i = 0; _0i < 7; _0i++) _0x4be406.readUInt8();
+      var _0name = _0x4be406.readStringZeroUtf8().replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\ufffd]/g, '').replace(/^\[.\]/, '');
+      var _0msg = _0x4be406.readStringZeroUtf8().replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\ufffd]/g, '');
+      if (_0msg) _0x40f48a.normal(_0name || 'Player', _0msg);
     }
     static ["worldUpdate"](_0x449cb9, _0x43ee07 = 1) {
       _0xb45f1b.refreshTime();
