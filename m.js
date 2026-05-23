@@ -4275,15 +4275,18 @@
       }
     }
     static ["handleChat"](_0x4be406) {
-      var _0x16ef7c = _0x4be406.readStringZeroUtf8();
-      var _0x365e8b = _0x4be406.readStringZeroUtf8();
-      _0x16ef7c = _0x16ef7c.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\ufffd]/g, '');
-      _0x365e8b = _0x365e8b.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\ufffd]/g, '');
-      if (_0x365e8b.length === 0) {
-        _0x40f48a.normal('Chat', _0x16ef7c);
+      var _0xplayerId = _0x4be406.readUInt32();
+      var _0xname = '';
+      if (_0x12ac51.selfID === _0xplayerId) {
+        _0xname = _0x90a1a7.nick;
       } else {
-        _0x40f48a.normal(_0x16ef7c || 'Chat', _0x365e8b);
+        var _0xplayer = _0x12ac51.getPlayer(_0xplayerId);
+        if (_0xplayer && _0xplayer.nick) _0xname = _0xplayer.nick;
       }
+      _0xname = _0xname.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\ufffd]/g, '') || 'Unknown';
+      var _0xmsg = _0x4be406.readStringZeroUtf8();
+      _0xmsg = _0xmsg.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\ufffd]/g, '');
+      if (_0xmsg.length) _0x40f48a.normal(_0xname, _0xmsg);
     }
     static ["worldUpdate"](_0x449cb9, _0x43ee07 = 1) {
       _0xb45f1b.refreshTime();
