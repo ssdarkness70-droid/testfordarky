@@ -4275,18 +4275,18 @@
       }
     }
     static ["handleChat"](_0x4be406) {
-      var _0xplayerId = _0x4be406.readUInt32();
-      var _0xname = '';
-      if (_0x12ac51.selfID === _0xplayerId) {
-        _0xname = _0x90a1a7.nick;
-      } else {
-        var _0xplayer = _0x12ac51.getPlayer(_0xplayerId);
-        if (_0xplayer && _0xplayer.nick) _0xname = _0xplayer.nick;
+      var _0xhex = [];
+      for (var _0i = 0; _0i < _0x4be406.dataView.byteLength; _0i++) {
+        _0xhex.push(_0x4be406.dataView.getUint8(_0i).toString(16).padStart(2,'0'));
       }
-      _0xname = _0xname.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\ufffd]/g, '') || 'Unknown';
-      var _0xmsg = _0x4be406.readStringZeroUtf8();
-      _0xmsg = _0xmsg.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\ufffd]/g, '');
-      if (_0xmsg.length) _0x40f48a.normal(_0xname, _0xmsg);
+      console.log('CHAT86 RAW:', _0xhex.join(' '));
+      var _0s1 = _0x4be406.readStringZeroUtf8();
+      var _0s2 = _0x4be406.readStringZeroUtf8();
+      console.log('S1:', JSON.stringify(_0s1), 'S2:', JSON.stringify(_0s2));
+      _0s1 = _0s1.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\ufffd]/g, '');
+      _0s2 = _0s2.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\ufffd]/g, '');
+      if (_0s2) _0x40f48a.normal(_0s1 || 'Player', _0s2);
+      else if (_0s1) _0x40f48a.alert('Notice', _0s1);
     }
     static ["worldUpdate"](_0x449cb9, _0x43ee07 = 1) {
       _0xb45f1b.refreshTime();
