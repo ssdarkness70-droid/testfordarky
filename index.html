@@ -598,6 +598,15 @@
         }
     </style>
     <div id="loading-screen"></div>
+    <div id="party-hud" style="position:fixed;top:10px;left:10px;z-index:9999;display:flex;flex-direction:column;gap:4px;">
+        <div id="party-code-display" style="display:none;color:#8f8;font-size:13px;font-weight:bold;text-shadow:0 0 6px #000;background:rgba(0,0,0,0.6);padding:4px 8px;border-radius:4px;"></div>
+        <div style="display:flex;gap:4px;">
+            <input id="party-token" placeholder="Party code" style="width:100px;background:#222;color:#fff;border:1px solid #555;padding:4px 6px;border-radius:3px;font-size:12px;">
+            <button id="join-party" style="background:#4a4;color:#fff;border:none;padding:4px 8px;border-radius:3px;cursor:pointer;font-size:12px;">Join</button>
+            <button id="create-party" style="background:#44a;color:#fff;border:none;padding:4px 8px;border-radius:3px;cursor:pointer;font-size:12px;">Create</button>
+            <button id="party-leave" style="display:none;background:#a44;color:#fff;border:none;padding:4px 8px;border-radius:3px;cursor:pointer;font-size:12px;">Leave</button>
+        </div>
+    </div>
     <div id="huds">
         <div id="leaderboard-hud">
             <div id="leaderboard-head" data="html.leaderboard.title">Multibox</div>
@@ -714,15 +723,6 @@
             </div>
         </div>
 
-        <div style="padding: 8px; border-top: 1px solid #444; margin-top: 8px;">
-            <div style="display:flex; gap:4px; margin-bottom: 4px;">
-                <input id="party-token" placeholder="Party code" style="flex:1; background:#222; color:#fff; border:1px solid #555; padding:4px 6px; border-radius:3px; font-size:12px;">
-                <button id="join-party" style="background:#4a4; color:#fff; border:none; padding:4px 8px; border-radius:3px; cursor:pointer; font-size:12px;">Join</button>
-                <button id="create-party" style="background:#44a; color:#fff; border:none; padding:4px 8px; border-radius:3px; cursor:pointer; font-size:12px;">Create</button>
-                <button id="party-leave" style="display:none; background:#a44; color:#fff; border:none; padding:4px 8px; border-radius:3px; cursor:pointer; font-size:12px;">Leave</button>
-            </div>
-            <div id="party-code-display" style="display:none; color:#8f8; font-size:12px; text-align:center;"></div>
-        </div>
         <div class="minimap-head">
             <button class="minimap-button" id="minimap-show-1">1</button>
             <button class="minimap-button" id="minimap-show-2">2</button>
