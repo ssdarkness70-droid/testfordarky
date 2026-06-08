@@ -215,6 +215,14 @@
     teamIndicator: "Teammate indicator",
     commander: "Commander",
     "chatType": "Chat type",
+    virusMass: "Virus mass",
+    showMassInLB: "Show mass in leaderboard",
+    cellLuminous: "Cell Luminous",
+    multiboxShield: "Multibox Shield",
+    grayscaleInactive: "Grayscale Inactive",
+    antiAliasing: "Anti-aliasing",
+    virusRing: "Virus Ring",
+    foodGlow: "Food Glow",
     targeting: "Cell Targeting [Spectate mode]",
     "opt_on": 'On',
     "opt_off": 'Off',
@@ -235,7 +243,9 @@
     opt_onlyLines: "Only lines",
     opt_snowflakes: "Snowflakes",
     opt_chatroom: "Chatroom",
-    "opt_popup": "Pop up chat"
+    "opt_popup": "Pop up chat",
+    opt_fill: "Fill",
+    opt_text: "Text"
   };
   const _0xc530a1 = {
     "title": 'Hotkeys',
@@ -256,6 +266,7 @@
     "toggleSkin": "Toggle skin",
     toggleCustomSkin: "Toggle Custom Skin",
     "toggleFood": "Toggle food",
+    toggleMaouCircle: "Toggle Maou circle",
     respawnKey: "Quick respawn",
     multiboxTab: "Multibox switch",
     command0Key: "Command 0",
@@ -314,6 +325,12 @@
     chatFontSize: "Chat font size",
     minimapSize: "Minimap size",
     "skinBorder": "Skin border",
+    rainbowBorder: "Rainbow border",
+    virusGlow: "Virus glow",
+    virusGlowDistance: "Virus glow distance",
+    virusGlowColor: "Virus glow color",
+    foodGlow: "Food glow",
+    maouCircle: "Maou circle",
     cellTransparency: "Cell transparency",
     lightenCellColor: "Lighten cell color",
     borderColor: "Border color",
@@ -339,9 +356,37 @@
     "virusDecor": "Virus Decoration",
     backgroundColor: "Background color",
     commanderColor: "Commander color",
+    commanderImageUrl: "Commander image URL",
     indicatorSize: "Teammate indicator size",
     "team1color": "Team 1 color [Double Tag Mode]",
     "team2color": "Team 2 color [Double Tag Mode]",
+    borderOpacity: "Border Opacity",
+    borderGlowSize: "Border glow size",
+    borderGlowStrength: "Border glow strength",
+    borderGlowColor: "Border glow color",
+    cursorLineColor: "Cursor Line Color",
+    leaderboardTitleColor: "Leaderboard title color",
+    customLeaderboardHead: "Custom Leaderboard Head",
+    globalRotationSpeed: "Global Rotation Speed",
+    maouCircleUrl: "Maou Circle Skin URL",
+    multiboxShieldUrl: "Multibox Shield URL",
+    virusGlowSize: "Virus glow size",
+    virusGlowStrength: "Virus glow strength",
+    virusRingWidth: "Virus Ring Width",
+    virusRingColor: "Virus Ring Color",
+    virusGearColor: "Virus Gear Color",
+    foodGlowSize: "Food Glow Size",
+    foodGlowStrength: "Food Glow Strength",
+    foodGlowColor: "Food Glow Color",
+    ghostColor: "Ghost cell color [minimap]",
+    selfColor: "Self cell color [minimap]",
+    selfViewportColor: "Self viewport color [minimap]",
+    selfViewportAlpha: "Self viewport alpha",
+    topViewportColor: "Top viewport color [minimap]",
+    topViewportAlpha: "Top viewport alpha",
+    teammateColor: "Teammate cells color [minimap]",
+    teammateNameColor: "Teammate name color [minimap]",
+    backgroundImage: "Background Image URL",
     on: 'On',
     "off": "Off"
   };
@@ -390,6 +435,14 @@
       this.targeting = _0x19d5af.get("settings", "targeting") || "off";
       this.chatType = _0x19d5af.get("settings", "chatType") || 'popup';
       this.multiboxMode = _0x19d5af.get('settings', "multiboxMode") || 'on';
+      this.virusMass = _0x19d5af.get("settings", "virusMass") || 'off';
+      this.showMassInLB = _0x19d5af.get("settings", "showMassInLB") || 'off';
+      this.cellLuminous = _0x19d5af.get("settings", "cellLuminous") || 'off';
+      this.multiboxShield = _0x19d5af.get("settings", "multiboxShield") || 'off';
+      this.grayscaleInactive = _0x19d5af.get("settings", "grayscaleInactive") || 'off';
+      this.antiAliasing = _0x19d5af.get("settings", "antiAliasing") || 'on';
+      this.virusRing = _0x19d5af.get("settings", "virusRing") || 'off';
+      this.foodGlow = _0x19d5af.get("settings", "foodGlow") || 'off';
       this.setDomValues();
       this.addEvents();
     }
@@ -647,14 +700,18 @@
       const _0xededcf = {
         "nick": "profile " + this.selected,
         skin: "https://i.imgur.com/nRqSis7.png",
-        "arbSkin": ''
+        "arbSkin": '',
+        "nick2": '',
+        "skin2": ''
       };
       if (!_0x518ea9) {
         _0x518ea9 = _0xededcf;
       }
       _0x19d5af.set('profiles', "profile" + this.selected, _0x518ea9);
       _0x14f7b2("#nick").val(_0x518ea9.nick);
+      _0x14f7b2("#nick2").val(_0x518ea9.nick2 || '');
       _0x14f7b2("#skin").val(_0x518ea9.skin);
+      _0x14f7b2("#skin2").val(_0x518ea9.skin2 || '');
       _0x14f7b2("#tag").val(this.tag);
       _0x14f7b2("#arbSkin").val(_0x518ea9.arbSkin);
       this.updateMainSkin();
@@ -706,6 +763,20 @@
         }
         this.setarbSkin();
       });
+      _0x14f7b2("#nick2").blur(() => {
+        let _0xprofile2 = _0x19d5af.get('profiles', "profile" + this.selected);
+        if (!_0xprofile2) _0xprofile2 = {};
+        _0xprofile2.nick2 = _0x14f7b2("#nick2").val();
+        _0x19d5af.set('profiles', "profile" + this.selected, _0xprofile2);
+        _0x90a1a7.nick2 = _0xprofile2.nick2 || '';
+      });
+      _0x14f7b2("#skin2").blur(() => {
+        let _0xprofile2 = _0x19d5af.get('profiles', "profile" + this.selected);
+        if (!_0xprofile2) _0xprofile2 = {};
+        _0xprofile2.skin2 = _0x14f7b2("#skin2").val();
+        _0x19d5af.set('profiles', "profile" + this.selected, _0xprofile2);
+        _0x90a1a7.skin2 = _0x14f7b2("#skin2").val();
+      });
     }
     static ["switch"](_0x5517bb) {
       this.selected = ~~_0x5517bb;
@@ -714,16 +785,22 @@
       const _0x319c35 = {
         nick: "profile " + this.selected,
         skin: "https://i.imgur.com/nRqSis7.png",
-        arbSkin: ''
+        arbSkin: '',
+        nick2: '',
+        skin2: ''
       };
       if (!_0x4d475c) {
         _0x4d475c = _0x319c35;
       }
       _0x14f7b2("#nick").val(_0x4d475c.nick);
+      _0x14f7b2("#nick2").val(_0x4d475c.nick2 || '');
       _0x14f7b2('#skin').val(_0x4d475c.skin);
+      _0x14f7b2("#skin2").val(_0x4d475c.skin2 || '');
       _0x14f7b2("#arbSkin").val(_0x4d475c.arbSkin);
       _0x90a1a7.nick = '' === _0x4d475c.nick ? "Unnamed Cell" : _0x4d475c.nick;
+      _0x90a1a7.nick2 = _0x4d475c.nick2 || '';
       _0x90a1a7.skin = _0x4d475c.skin;
+      _0x90a1a7.skin2 = _0x4d475c.skin2 || '';
       _0x19d5af.set('profiles', "profile" + this.selected, _0x4d475c);
       this.updateMainSkin();
     }
@@ -736,7 +813,9 @@
       const _0x1170bc = {
         "nick": "profile " + this.selected,
         "skin": "https://i.imgur.com/nRqSis7.png",
-        "arbSkin": ''
+        "arbSkin": '',
+        "nick2": '',
+        "skin2": ''
       };
       if (!_0x235246) {
         _0x235246 = _0x1170bc;
@@ -750,12 +829,15 @@
       _0x90a1a7.arbSkin = _0x431fed;
       let _0x4b4ffa = _0x14f7b2("#skin").val();
       if (_0x386cbc.code2Url(_0x386cbc.getImgurCode(_0x4b4ffa || '')).includes("XXXXXXX")) {
+        const _0xprev = _0x19d5af.get('profiles', "profile" + this.selected) || {};
         const _0x5d3148 = {
           "nick": "profile " + this.selected,
           "skin": '',
           "arbSkin": _0x431fed,
           skin: _0x386cbc.code2Url(_0x386cbc.getImgurCode(_0x4b4ffa)),
-          "arbSkin": _0x431fed
+          "arbSkin": _0x431fed,
+          nick2: _0xprev.nick2 || '',
+          skin2: _0xprev.skin2 || ''
         };
         _0x90a1a7.skin = _0x386cbc.code2Url(_0x386cbc.getImgurCode(_0x4b4ffa));
         _0x19d5af.set('profiles', "profile" + this.selected, _0x5d3148);
@@ -768,7 +850,9 @@
       const _0x1197ad = {
         "nick": "profile " + this.selected,
         skin: "https://i.imgur.com/nRqSis7.png",
-        "arbSkin": ''
+        "arbSkin": '',
+        "nick2": '',
+        "skin2": ''
       };
       if (!_0x2716a1) {
         _0x2716a1 = _0x1197ad;
@@ -820,6 +904,7 @@
       this.respawnKey = _0x19d5af.get("hotkeys", "respawnKey") || "TILDE";
       this.multiboxTab = _0x19d5af.get('hotkeys', "multiboxTab") || "TAB";
       this.togglemultiboxRing = _0x19d5af.get("hotkeys", "togglemultiboxRing") || 'L';
+      this.toggleMaouCircle = _0x19d5af.get("hotkeys", "toggleMaouCircle") || 'K';
       this.command0Key = _0x19d5af.get("hotkeys", "command0Key") || '0';
       this.command1Key = _0x19d5af.get("hotkeys", "command1Key") || '1';
       this.command2Key = _0x19d5af.get("hotkeys", "command2Key") || '2';
@@ -876,7 +961,7 @@
           }
           if (!_0x31c9b4.isOpened) {
             _0x4f6eb0.preventDefault();
-            return _0x226f1c !== this.freeSpectateKey || _0x90a1a7.isAlive ? _0x226f1c === this.respawnKey ? void _0x22a8df.respawn() : _0x226f1c === this.macroFeedKey ? void _0x22a8df.macroFeed(true) : _0x226f1c === this.feedKey ? void _0x22a8df.feed() : _0x226f1c === this.splitKey ? void _0x22a8df.split() : _0x226f1c === this.doubleSplitKey ? void _0x22a8df.doubleSplit() : _0x226f1c === this.split16Key ? void _0x22a8df.split16() : _0x226f1c === this.multiboxTab ? void _0x22a8df.multiboxTab() : _0x226f1c === this.stopKey ? void _0x22a8df.stopMovementToggle() : _0x226f1c === this.toggleSplitRings ? void _0x22a8df.toggleSplitRings() : _0x226f1c === this.toggleOpponentRings ? void _0x22a8df.toggleOpponentRings() : _0x226f1c === this.toggleNick ? void _0x22a8df.toggleCellNick() : _0x226f1c === this.toggleMass ? void _0x22a8df.toggleCellMass() : _0x226f1c === this.toggleBGsectors ? void _0x22a8df.toggleBGsectors() : _0x226f1c === this.toggleFood ? void _0x22a8df.toggleGameFood() : _0x226f1c === this.toggleSkin ? void _0x22a8df.toggleSkin() : _0x226f1c === this.toggleCustomSkin ? void _0x22a8df.toggleCustomSkin() : _0x226f1c === this.togglemultiboxRing ? void _0x22a8df.togglemultiboxRing() : _0x226f1c === this.command0Key ? void _0x22a8df.command(0) : _0x226f1c === this.command1Key ? void _0x22a8df.command(1) : _0x226f1c === this.command2Key ? void _0x22a8df.command(2) : _0x226f1c === this.command3Key ? void _0x22a8df.command(3) : _0x226f1c === this.command4Key ? void _0x22a8df.command(4) : _0x226f1c === this.command5Key ? void _0x22a8df.command(5) : _0x226f1c === this.command6Key ? void _0x22a8df.command(6) : _0x226f1c === this.command7Key ? void _0x22a8df.command(7) : _0x226f1c === this.command8Key ? void _0x22a8df.command(8) : _0x226f1c === this.command9Key ? void _0x22a8df.command(9) : _0x226f1c === this.zoom1key ? void _0x22a8df.setZoom(0.5) : _0x226f1c === this.zoom2key ? void _0x22a8df.setZoom(0.25) : _0x226f1c === this.zoom3key ? void _0x22a8df.setZoom(0.125) : _0x226f1c === this.zoom4key ? void _0x22a8df.setZoom(0.075) : _0x226f1c === this.zoom5key ? void _0x22a8df.setZoom(0.05) : undefined : void _0x22a8df.toggleSpectate();
+            return _0x226f1c !== this.freeSpectateKey || _0x90a1a7.isAlive ? _0x226f1c === this.respawnKey ? void _0x22a8df.respawn() : _0x226f1c === this.macroFeedKey ? void _0x22a8df.macroFeed(true) : _0x226f1c === this.feedKey ? void _0x22a8df.feed() : _0x226f1c === this.splitKey ? void _0x22a8df.split() : _0x226f1c === this.doubleSplitKey ? void _0x22a8df.doubleSplit() : _0x226f1c === this.split16Key ? void _0x22a8df.split16() : _0x226f1c === this.multiboxTab ? void _0x22a8df.multiboxTab() : _0x226f1c === this.stopKey ? void _0x22a8df.stopMovementToggle() : _0x226f1c === this.toggleSplitRings ? void _0x22a8df.toggleSplitRings() : _0x226f1c === this.toggleOpponentRings ? void _0x22a8df.toggleOpponentRings() : _0x226f1c === this.toggleNick ? void _0x22a8df.toggleCellNick() : _0x226f1c === this.toggleMass ? void _0x22a8df.toggleCellMass() : _0x226f1c === this.toggleBGsectors ? void _0x22a8df.toggleBGsectors() : _0x226f1c === this.toggleFood ? void _0x22a8df.toggleGameFood() : _0x226f1c === this.toggleSkin ? void _0x22a8df.toggleSkin() : _0x226f1c === this.toggleCustomSkin ? void _0x22a8df.toggleCustomSkin() : _0x226f1c === this.togglemultiboxRing ? void _0x22a8df.togglemultiboxRing() : _0x226f1c === this.toggleMaouCircle ? void _0x22a8df.toggleMaouCircle() : _0x226f1c === this.command0Key ? void _0x22a8df.command(0) : _0x226f1c === this.command1Key ? void _0x22a8df.command(1) : _0x226f1c === this.command2Key ? void _0x22a8df.command(2) : _0x226f1c === this.command3Key ? void _0x22a8df.command(3) : _0x226f1c === this.command4Key ? void _0x22a8df.command(4) : _0x226f1c === this.command5Key ? void _0x22a8df.command(5) : _0x226f1c === this.command6Key ? void _0x22a8df.command(6) : _0x226f1c === this.command7Key ? void _0x22a8df.command(7) : _0x226f1c === this.command8Key ? void _0x22a8df.command(8) : _0x226f1c === this.command9Key ? void _0x22a8df.command(9) : _0x226f1c === this.zoom1key ? void _0x22a8df.setZoom(0.5) : _0x226f1c === this.zoom2key ? void _0x22a8df.setZoom(0.25) : _0x226f1c === this.zoom3key ? void _0x22a8df.setZoom(0.125) : _0x226f1c === this.zoom4key ? void _0x22a8df.setZoom(0.075) : _0x226f1c === this.zoom5key ? void _0x22a8df.setZoom(0.05) : undefined : void _0x22a8df.toggleSpectate();
           }
         }
       }
@@ -940,6 +1025,8 @@
         _0x5b9fc6 = "toggleCustomSkin";
       } else if (_0x353177 === this.togglemultiboxRing) {
         _0x5b9fc6 = "togglemultiboxRing";
+      } else if (_0x353177 === this.toggleMaouCircle) {
+        _0x5b9fc6 = "toggleMaouCircle";
       } else if (_0x353177 === this.respawnKey) {
         _0x5b9fc6 = 'respawnKey';
       } else if (_0x353177 === this.command0Key) {
@@ -1371,6 +1458,10 @@
       const _0x319d03 = _0x19d5af.get("settings", "multiboxRing");
       _0x2cc0f3.multiboxRing = "off" === _0x2cc0f3.multiboxRing ? 'off' !== _0x319d03 && _0x319d03 || 'on' : "off";
     }
+    static ["toggleMaouCircle"]() {
+      const _0x3c9a1b = _0x19d5af.get("theme", "maouCircle");
+      _0x480be4.maouCircle = "off" === _0x480be4.maouCircle ? 'off' !== _0x3c9a1b && _0x3c9a1b || 'on' : 'off';
+    }
     static ["respawn"]() {
       const _0x247aae = setInterval(() => {
         if (_0x18a8d1.connected) {
@@ -1482,6 +1573,15 @@
       this.lightenCellColor = ~~_0x19d5af.get("theme", "lightenCellColor") || 100;
       this.borderWidth = ~~_0x19d5af.get("theme", "borderWidth") || 60;
       this.borderColor = _0x19d5af.get('theme', "borderColor") || "#ffffff";
+      this.rainbowBorder = _0x19d5af.get("theme", "rainbowBorder") || "off";
+      this._rainbowHue = 0;
+      this.virusGlow = _0x19d5af.get("theme", "virusGlow") || "off";
+      this.virusGlowDistance = ~~_0x19d5af.get("theme", "virusGlowDistance") || 50;
+      this.virusGlowColor = _0x19d5af.get('theme', "virusGlowColor") || "#00bcff";
+      this.foodGlowColor = _0x19d5af.get('theme', "foodGlowColor") || "#00ff00";
+      this.foodGlowSize = ~~_0x19d5af.get("theme", "foodGlowSize") || 20;
+      this.foodGlowStrength = ~~_0x19d5af.get("theme", "foodGlowStrength") || 1;
+      this.maouCircle = _0x19d5af.get("theme", "maouCircle") || "off";
       this.team1color = _0x19d5af.get("theme", "team1color") || "#aeaeae";
       this.team2color = _0x19d5af.get("theme", 'team2color') || "#ff171f";
       this.multiboxActive = _0x19d5af.get("theme", "multiboxActive") || "#ff61f8";
@@ -1506,12 +1606,80 @@
       this.virusBorderColor = _0x19d5af.get('theme', "virusBorderColor") || "#c2c2c2";
       this.virusBorderWidth = ~~_0x19d5af.get("theme", "virusBorderWidth") || 10;
       this.commanderColor = _0x19d5af.get("theme", "commanderColor") || "#f5e35d";
+      this.commanderImageUrl = _0x19d5af.get("theme", "commanderImageUrl") || "";
       this.backgroundColor = _0x19d5af.get("theme", "backgroundColor") || "#000000";
       this.indicatorSize = ~~_0x19d5af.get("theme", "indicatorSize") || 100;
       this.cursor = _0x19d5af.get("theme", "cursor") || 13;
+      this.borderOpacity = ~~_0x19d5af.get("theme", "borderOpacity") || 10;
+      this.borderGlowSize = ~~_0x19d5af.get("theme", "borderGlowSize") || 10;
+      this.borderGlowStrength = ~~_0x19d5af.get("theme", "borderGlowStrength") || 5;
+      this.borderGlowColor = _0x19d5af.get("theme", "borderGlowColor") || "#ffffff";
+      this.cursorLineColor = _0x19d5af.get("theme", "cursorLineColor") || "#ff0000";
+      this.leaderboardTitleColor = _0x19d5af.get("theme", "leaderboardTitleColor") || "#ffffff";
+      this.customLeaderboardHead = _0x19d5af.get("theme", "customLeaderboardHead") || "off";
+      this.globalRotationSpeed = ~~_0x19d5af.get("theme", "globalRotationSpeed") || 5;
+      this.maouCircleUrl = _0x19d5af.get("theme", "maouCircleUrl") || "";
+      this.multiboxShieldUrl = _0x19d5af.get("theme", "multiboxShieldUrl") || "";
+      this.virusGlowSize = ~~_0x19d5af.get("theme", "virusGlowSize") || 50;
+      this.virusGlowStrength = ~~_0x19d5af.get("theme", "virusGlowStrength") || 5;
+      this.virusRingWidth = ~~_0x19d5af.get("theme", "virusRingWidth") || 10;
+      this.virusRingColor = _0x19d5af.get("theme", "virusRingColor") || "#ffffff";
+      this.virusGearColor = _0x19d5af.get("theme", "virusGearColor") || "#ff0066";
+      this.ghostColor = _0x19d5af.get("theme", "ghostColor") || "#aaa";
+      this.selfColor = _0x19d5af.get("theme", "selfColor") || "#fff";
+      this.selfViewportColor = _0x19d5af.get("theme", "selfViewportColor") || "#fff";
+      this.selfViewportAlpha = ~~_0x19d5af.get("theme", "selfViewportAlpha") || 5;
+      this.topViewportColor = _0x19d5af.get("theme", "topViewportColor") || "#fff";
+      this.topViewportAlpha = ~~_0x19d5af.get("theme", "topViewportAlpha") || 5;
+      this.teammateColor = _0x19d5af.get("theme", "teammateColor") || "#555";
+      this.teammateNameColor = _0x19d5af.get("theme", "teammateNameColor") || "#fff";
+      this.backgroundImage = _0x19d5af.get("theme", "backgroundImage") || "";
       this.addPresets();
       this.setDomValues();
       this.addEvents();
+      this.setLeaderboardTitle();
+      this.setBackgroundImage(this.backgroundImage);
+      this._initMaouCircle();
+      this._initMultiboxShield();
+    }
+    static ["_initMultiboxShield"]() {
+      this._shieldReady = false;
+      this.shieldImage = new Image();
+      this.shieldImage.crossOrigin = "anonymous";
+      this.shieldImage.onload = () => { this._shieldReady = true; };
+      this.shieldImage.src = this.multiboxShieldUrl && this.multiboxShieldUrl.length > 0
+        ? this.multiboxShieldUrl
+        : "https://raw.githubusercontent.com/darknessxd/3rbio-multibox/main/hslo_ring.png";
+    }
+    static ["_initMaouCircle"]() {
+      this.maouRotation = 0;
+      this._maouReady = false;
+      this.maouCanvas = document.createElement('canvas');
+      this.maouCanvas.width = this.maouCanvas.height = 513;
+      this.maouCtx = this.maouCanvas.getContext('2d');
+      this.maouOuter = new Image();
+      this.maouInner = new Image();
+      this.maouOuter.crossOrigin = "anonymous";
+      this.maouInner.crossOrigin = "anonymous";
+      const _0xb0d1c2 = this.maouCircleUrl && this.maouCircleUrl.length > 0 ? this.maouCircleUrl : "https://raw.githubusercontent.com/darknessxd/3rbio-multibox/main/";
+      this.maouOuter.onload = () => { this._maouReady = true; };
+      this.maouInner.onload = () => { if (this.maouOuter.complete) this._maouReady = true; };
+      this.maouOuter.src = _0xb0d1c2 + "hslo_ring.png";
+      this.maouInner.src = _0xb0d1c2 + "maou_inner.png";
+      setInterval(() => {
+        if (this.maouCircle !== "on" || !this._maouReady) return;
+        this.maouRotation = (this.maouRotation + (this.globalRotationSpeed || 1)) % 360;
+        const _0x5e3f1a = 256.5;
+        this.maouCtx.save();
+        this.maouCtx.setTransform(1, 0, 0, -1, _0x5e3f1a + 0.5, _0x5e3f1a + 0.5);
+        this.maouCtx.clearRect(-_0x5e3f1a, -_0x5e3f1a, 513, 513);
+        const _0x3a7b2c = this.maouRotation * Math.PI / 180;
+        this.maouCtx.rotate(_0x3a7b2c);
+        this.maouCtx.drawImage(this.maouOuter, -_0x5e3f1a, -_0x5e3f1a);
+        this.maouCtx.rotate(-_0x3a7b2c * 2);
+        this.maouCtx.drawImage(this.maouInner, -_0x5e3f1a, -_0x5e3f1a);
+        this.maouCtx.restore();
+      }, 40);
     }
     static ["setDomValues"]() {
       _0x14f7b2(".theme-options").each(function () {
@@ -1561,6 +1729,17 @@
         });
       });
       _0x14f7b2(".theme-close").click(() => this.close());
+      _0x14f7b2("input#backgroundImage, input#maouCircleUrl, input#multiboxShieldUrl, input#commanderImageUrl").each(function () {
+        const _0x558bc6 = _0x14f7b2(this).attr('id');
+        _0x14f7b2(this).val(_0x480be4[_0x558bc6] || '');
+        _0x14f7b2(this).on('input', function () {
+          const _0x2b7e1d = _0x14f7b2(this).val();
+          _0x480be4.saveTheme(_0x558bc6, _0x2b7e1d);
+          if ('commanderImageUrl' === _0x558bc6) {
+            _0x386cbc._loadCeImage(_0x2b7e1d);
+          }
+        });
+      });
     }
     static ['toggle']() {
       if (this.isOpened) {
@@ -1716,6 +1895,12 @@
       if ("nickColor" === _0x589c1b) {
         _0x34f3bb.nickCaches.clear();
       }
+      if ("leaderboardTitleColor" === _0x589c1b || "customLeaderboardHead" === _0x589c1b) {
+        this.setLeaderboardTitle();
+      }
+      if ("backgroundImage" === _0x589c1b) {
+        this.setBackgroundImage(_0x33fe69);
+      }
       _0x19d5af.set('theme', _0x589c1b, _0x33fe69);
     }
     static ["setBackground"](_0x4ffb10) {
@@ -1752,6 +1937,15 @@
       _0x14f7b2(".minimap-head").css("bottom", _0x567cb6 + 9 + 'px');
     }
     static ['setCursor'](_0xef6b4e) {}
+    static ["setLeaderboardTitle"]() {
+      const _0x2933e8 = this.customLeaderboardHead;
+      const _0x245fbe = "off" === _0x2933e8 ? "DarknessV1" : _0x2933e8;
+      _0x14f7b2("#leaderboard-head").css("color", this.leaderboardTitleColor);
+      _0x14f7b2("#leaderboard-head span").text(_0x245fbe);
+    }
+    static ["setBackgroundImage"](_0x3e7195) {
+      _0x386cbc._loadBgImage(_0x3e7195);
+    }
     static ["selectPreset"](_0x4da382) {
       const _0x5ae372 = this.presets[_0x4da382];
       if ("custom" !== _0x4da382 && _0x5ae372) {
@@ -1800,7 +1994,28 @@
         commanderColor: "#0849d4",
         backgroundColor: "#000",
         indicatorSize: 0x64,
-        "cursor": 0x7
+        "cursor": 0x7,
+        borderOpacity: 0xa,
+        borderGlowSize: 0xa,
+        borderGlowStrength: 0x5,
+        borderGlowColor: "#ffffff",
+        cursorLineColor: "#ff0000",
+        leaderboardTitleColor: "#ffffff",
+        customLeaderboardHead: "off",
+        globalRotationSpeed: 0x5,
+        maouCircleUrl: "",
+        multiboxShieldUrl: "",
+        virusGlowSize: 0x32,
+        virusGlowStrength: 0x5,
+        ghostColor: "#aaa",
+        selfColor: "#fff",
+        selfViewportColor: "#fff",
+        selfViewportAlpha: 0x5,
+        topViewportColor: "#fff",
+        topViewportAlpha: 0x5,
+        teammateColor: "#555",
+        teammateNameColor: "#fff",
+        backgroundImage: ""
       };
       const _0x4d89ea = {
         CellAnimation: 0xa0,
@@ -1848,7 +2063,28 @@
         commanderColor: "#0849d4",
         backgroundColor: '#000000',
         indicatorSize: 0x64,
-        cursor: 0x1
+        cursor: 0x1,
+        borderOpacity: 0xa,
+        borderGlowSize: 0xa,
+        borderGlowStrength: 0x5,
+        borderGlowColor: "#ffffff",
+        cursorLineColor: "#ff0000",
+        leaderboardTitleColor: "#ffffff",
+        customLeaderboardHead: "off",
+        globalRotationSpeed: 0x5,
+        maouCircleUrl: "",
+        multiboxShieldUrl: "",
+        virusGlowSize: 0x32,
+        virusGlowStrength: 0x5,
+        ghostColor: "#aaa",
+        selfColor: "#fff",
+        selfViewportColor: "#fff",
+        selfViewportAlpha: 0x5,
+        topViewportColor: "#fff",
+        topViewportAlpha: 0x5,
+        teammateColor: "#555",
+        teammateNameColor: "#fff",
+        backgroundImage: ""
       };
       const _0x351870 = {
         CellAnimation: 0x78,
@@ -1896,7 +2132,28 @@
         commanderColor: "#0849d4",
         backgroundColor: "#000000",
         indicatorSize: 0x64,
-        "cursor": 0x1
+        "cursor": 0x1,
+        borderOpacity: 0xa,
+        borderGlowSize: 0xa,
+        borderGlowStrength: 0x5,
+        borderGlowColor: "#ffffff",
+        cursorLineColor: "#ff0000",
+        leaderboardTitleColor: "#ffffff",
+        customLeaderboardHead: "off",
+        globalRotationSpeed: 0x5,
+        maouCircleUrl: "",
+        multiboxShieldUrl: "",
+        virusGlowSize: 0x32,
+        virusGlowStrength: 0x5,
+        ghostColor: "#aaa",
+        selfColor: "#fff",
+        selfViewportColor: "#fff",
+        selfViewportAlpha: 0x5,
+        topViewportColor: "#fff",
+        topViewportAlpha: 0x5,
+        teammateColor: "#555",
+        teammateNameColor: "#fff",
+        backgroundImage: ""
       };
       const _0x4cb220 = {
         CellAnimation: 0x78,
@@ -1944,7 +2201,28 @@
         commanderColor: "#0849d4",
         backgroundColor: "#000a11",
         indicatorSize: 0x64,
-        "cursor": 0x1
+        "cursor": 0x1,
+        borderOpacity: 0xa,
+        borderGlowSize: 0xa,
+        borderGlowStrength: 0x5,
+        borderGlowColor: "#ffffff",
+        cursorLineColor: "#ff0000",
+        leaderboardTitleColor: "#ffffff",
+        customLeaderboardHead: "off",
+        globalRotationSpeed: 0x5,
+        maouCircleUrl: "",
+        multiboxShieldUrl: "",
+        virusGlowSize: 0x32,
+        virusGlowStrength: 0x5,
+        ghostColor: "#aaa",
+        selfColor: "#fff",
+        selfViewportColor: "#fff",
+        selfViewportAlpha: 0x5,
+        topViewportColor: "#fff",
+        topViewportAlpha: 0x5,
+        teammateColor: "#555",
+        teammateNameColor: "#fff",
+        backgroundImage: ""
       };
       const _0x8508de = {
         CellAnimation: 0x8c,
@@ -1992,7 +2270,28 @@
         commanderColor: "#00fff7",
         backgroundColor: "#000000",
         indicatorSize: 0x64,
-        "cursor": 0x1
+        "cursor": 0x1,
+        borderOpacity: 0xa,
+        borderGlowSize: 0xa,
+        borderGlowStrength: 0x5,
+        borderGlowColor: "#ffffff",
+        cursorLineColor: "#ff0000",
+        leaderboardTitleColor: "#ffffff",
+        customLeaderboardHead: "off",
+        globalRotationSpeed: 0x5,
+        maouCircleUrl: "",
+        multiboxShieldUrl: "",
+        virusGlowSize: 0x32,
+        virusGlowStrength: 0x5,
+        ghostColor: "#aaa",
+        selfColor: "#fff",
+        selfViewportColor: "#fff",
+        selfViewportAlpha: 0x5,
+        topViewportColor: "#fff",
+        topViewportAlpha: 0x5,
+        teammateColor: "#555",
+        teammateNameColor: "#fff",
+        backgroundImage: ""
       };
       const _0xa9ef03 = {
         CellAnimation: 0x78,
@@ -2040,7 +2339,28 @@
         commanderColor: "#00fff7",
         backgroundColor: "#111",
         indicatorSize: 0x64,
-        cursor: 0x1
+        cursor: 0x1,
+        borderOpacity: 0xa,
+        borderGlowSize: 0xa,
+        borderGlowStrength: 0x5,
+        borderGlowColor: "#ffffff",
+        cursorLineColor: "#ff0000",
+        leaderboardTitleColor: "#ffffff",
+        customLeaderboardHead: "off",
+        globalRotationSpeed: 0x5,
+        maouCircleUrl: "",
+        multiboxShieldUrl: "",
+        virusGlowSize: 0x32,
+        virusGlowStrength: 0x5,
+        ghostColor: "#aaa",
+        selfColor: "#fff",
+        selfViewportColor: "#fff",
+        selfViewportAlpha: 0x5,
+        topViewportColor: "#fff",
+        topViewportAlpha: 0x5,
+        teammateColor: "#555",
+        teammateNameColor: "#fff",
+        backgroundImage: ""
       };
       const _0x59aee0 = {
         CellAnimation: 0x78,
@@ -2088,7 +2408,28 @@
         commanderColor: "#ffffff",
         backgroundColor: "#000000",
         indicatorSize: 0x64,
-        "cursor": 0x1
+        "cursor": 0x1,
+        borderOpacity: 0xa,
+        borderGlowSize: 0xa,
+        borderGlowStrength: 0x5,
+        borderGlowColor: "#ffffff",
+        cursorLineColor: "#ff0000",
+        leaderboardTitleColor: "#ffffff",
+        customLeaderboardHead: "off",
+        globalRotationSpeed: 0x5,
+        maouCircleUrl: "",
+        multiboxShieldUrl: "",
+        virusGlowSize: 0x32,
+        virusGlowStrength: 0x5,
+        ghostColor: "#aaa",
+        selfColor: "#fff",
+        selfViewportColor: "#fff",
+        selfViewportAlpha: 0x5,
+        topViewportColor: "#fff",
+        topViewportAlpha: 0x5,
+        teammateColor: "#555",
+        teammateNameColor: "#fff",
+        backgroundImage: ""
       };
       const _0x66c0ae = {
         CellAnimation: 0x78,
@@ -2136,7 +2477,28 @@
         commanderColor: "#ff006f",
         backgroundColor: "#222222",
         indicatorSize: 0x64,
-        cursor: 0x1
+        cursor: 0x1,
+        borderOpacity: 0xa,
+        borderGlowSize: 0xa,
+        borderGlowStrength: 0x5,
+        borderGlowColor: "#ffffff",
+        cursorLineColor: "#ff0000",
+        leaderboardTitleColor: "#ffffff",
+        customLeaderboardHead: "off",
+        globalRotationSpeed: 0x5,
+        maouCircleUrl: "",
+        multiboxShieldUrl: "",
+        virusGlowSize: 0x32,
+        virusGlowStrength: 0x5,
+        ghostColor: "#aaa",
+        selfColor: "#fff",
+        selfViewportColor: "#fff",
+        selfViewportAlpha: 0x5,
+        topViewportColor: "#fff",
+        topViewportAlpha: 0x5,
+        teammateColor: "#555",
+        teammateNameColor: "#fff",
+        backgroundImage: ""
       };
       const _0x32fa65 = {
         CellAnimation: 0x8c,
@@ -2257,13 +2619,14 @@
       this.barsCss = _0x24f9ab.createElement("style");
       _0x24f9ab.head.append(this.barsCss);
     }
-    static ['add'](_0x163eb9, _0x45d22b, _0x16dc97, _0x1f5c26, _0x5e4055) {
+    static ['add'](_0x163eb9, _0x45d22b, _0x16dc97, _0x1f5c26, _0x5e4055, _0x3c8584) {
       const _0x215fe4 = {
         "nick": _0x163eb9,
         "position": _0x45d22b,
         isSelf: _0x16dc97,
         account: _0x5e4055,
-        "isFriend": _0x1f5c26
+        "isFriend": _0x1f5c26,
+        "mass": _0x3c8584 || 0
       };
       this.list.add(_0x215fe4);
     }
@@ -2284,7 +2647,10 @@
         this.teamLBvisible = false;
       }
       let _0x25ab99 = '';
-      for (const _0x5341c7 of this.list.values()) _0x25ab99 += "<span style=\"direction: rtl;\"><strong>" + _0x5341c7.position + "  </strong>" + this.cleanNick(_0x5341c7.nick) + '<span>';
+      for (const _0x5341c7 of this.list.values()) {
+        const _0x2d18ff = _0x2cc0f3.showMassInLB === "on" && _0x5341c7.mass > 0 ? " <span class=\"lb-mass\">" + _0x5341c7.mass + "</span>" : "";
+        _0x25ab99 += "<span style=\"direction: rtl;\"><strong>" + _0x5341c7.position + "  </strong>" + this.cleanNick(_0x5341c7.nick) + _0x2d18ff + "</span>";
+      }
       this.div.innerHTML = _0x25ab99;
     }
     static ["cleanNick"](_0x23f18d) {
@@ -2311,21 +2677,27 @@
       const _0x145776 = this.size / _0x996564.edge;
       const _0x3f151d = _0xddb6d6.viewBounds;
       _0x46ff1c.clearRect(0, 0, this.size, this.size);
-      _0x46ff1c.fillStyle = "rgba(50, 50, 50, 0.4)";
+      const _0x3a9422 = _0x480be4.selfViewportAlpha / 10;
+      _0x46ff1c.globalAlpha = _0x3a9422;
+      _0x46ff1c.fillStyle = _0x480be4.selfViewportColor || "#fff";
       _0x46ff1c.fillRect(0 | (_0x3f151d.left - _0x996564.offset.x + 8000) * _0x145776, 0 | (_0x3f151d.top - _0x996564.offset.y + 8000) * _0x145776, 0 | (_0x3f151d.right - _0x3f151d.left) * _0x145776, 0 | (_0x3f151d.bottom - _0x3f151d.top) * _0x145776);
+      _0x46ff1c.globalAlpha = 1;
       if (_0x12ac51.biggestIsOn && (!_0xddb6d6.isSpectating || _0xddb6d6.freeSpectate)) {
         _0x12ac51.biggest.animate();
         const _0x10ec1e = _0x12ac51.biggest.mapX;
         const _0x28b9b8 = _0x12ac51.biggest.mapY;
+        const _0x24b0cd = _0x480be4.topViewportAlpha / 10;
         _0x46ff1c.beginPath();
         _0x46ff1c.arc(_0x10ec1e, _0x28b9b8, 7, 0, this.pi2, false);
         _0x46ff1c.closePath();
-        _0x46ff1c.fillStyle = '#fff';
+        _0x46ff1c.fillStyle = _0x480be4.topViewportColor || "#fff";
+        _0x46ff1c.globalAlpha = _0x24b0cd;
         _0x46ff1c.fill();
+        _0x46ff1c.globalAlpha = 1;
         _0x46ff1c.stroke();
         _0x46ff1c.fillText(_0x59f59a.current.huds.num1position || "#1 position", _0x10ec1e, _0x28b9b8 - 8);
       }
-      _0x46ff1c.strokeStyle = "#666";
+      _0x46ff1c.strokeStyle = _0x480be4.ghostColor || "#666";
       const _0x524787 = (8000 - _0x996564.offset.x + _0x90a1a7.deathLocation.x) * _0x145776;
       const _0x31e116 = (8000 - _0x996564.offset.y + _0x90a1a7.deathLocation.y) * _0x145776;
       _0x46ff1c.beginPath();
@@ -2342,7 +2714,7 @@
       _0x46ff1c.beginPath();
       _0x46ff1c.arc(_0x3a9e37, _0x192baa, _0x26be95, 0, this.pi2, false);
       _0x46ff1c.closePath();
-      _0x46ff1c.fillStyle = "#fff";
+      _0x46ff1c.fillStyle = _0x480be4.selfColor || "#fff";
       _0x46ff1c.fill();
       _0x46ff1c.stroke();
       if (_0x12ac51.isSpectator) {
@@ -2362,8 +2734,8 @@
         _0x5db847.beginPath();
         _0x5db847.arc(_0x37e58c, _0x5936f8, 5, 0, this.pi2, false);
         _0x5db847.closePath();
-        _0x5db847.fillStyle = "#fff";
         if (0 < _0x3f6db4.nick.length) {
+          _0x5db847.fillStyle = _0x480be4.teammateNameColor || "#fff";
           _0x5db847.fillText(_0x3f6db4.nick, _0x37e58c, _0x5936f8 - 6);
         }
         _0x5db847.fillStyle = 1 === _0x3f6db4.team ? _0x480be4.team1color : _0x480be4.team2color;
@@ -2383,11 +2755,12 @@
         _0x121e2c.moveTo(_0x15a5b7 + 5, _0x119d6b);
         _0x121e2c.arc(_0x15a5b7, _0x119d6b, 5, 0, this.pi2, false);
         if (0 < _0x477434.nick.length) {
+          _0x121e2c.fillStyle = _0x480be4.teammateNameColor || "#fff";
           _0x121e2c.fillText(_0x477434.nick, _0x15a5b7, _0x119d6b - 6);
         }
       }
       _0x121e2c.closePath();
-      _0x121e2c.fillStyle = "#555";
+      _0x121e2c.fillStyle = _0x480be4.teammateColor || "#555";
       _0x121e2c.fill();
     }
   }
@@ -2803,12 +3176,12 @@
     }
     static ["toggleStreammode"]() {
       if (this.streammode) {
-        _0x14f7b2("#nick, #tag, #tag2, #party-token").removeClass("input-hidden");
+        _0x14f7b2("#nick, #tag, #tag2").removeClass("input-hidden");
         _0x14f7b2("#streamMode").html("<i class=\"fa fa-eye fa-fw\"></i>");
         this.streammode = false;
         _0x19d5af.set('extras', "streammode", this.streammode);
       } else {
-        _0x14f7b2("#nick, #tag, #tag2, #party-token").addClass("input-hidden");
+        _0x14f7b2("#nick, #tag, #tag2").addClass("input-hidden");
         _0x14f7b2("#streamMode").html("<i class=\"fa fa-eye-slash fa-fw\"></i>");
         this.streammode = true;
         _0x19d5af.set("extras", "streammode", this.streammode);
@@ -3008,6 +3381,7 @@
       this.isFriend = false;
       this.account = '';
       this.cellType = _0x2a2eaf;
+
       this.animX = 0;
       this.animY = 0;
       this.animRadius = 0;
@@ -3071,9 +3445,11 @@
         y: 0x64
       };
       this._nick = _0x14f7b2("#nick").val();
+      this._nick2 = _0x14f7b2("#nick2").val();
       this._arbSkin = _0x14f7b2("#arbSkin").val();
       this._skin = _0x386cbc.getImgurCode(_0x14f7b2("#skin").val());
-      this._tag = _0x14f7b2("#tag").val();
+      this._skin2 = _0x386cbc.getImgurCode(_0x14f7b2("#skin2").val());
+      this.tag = _0x14f7b2("#tag").val();
       this._colorObject = _0x75abdd;
       this.colorHex = '#000';
       this.colorHex2 = "#000";
@@ -3115,6 +3491,12 @@
           this.colorHex = _0x305bc5.colorHex;
           break;
         }
+        if ('on' === _0x2cc0f3.commander) {
+          for (const _0x188d46 of _0x14d4a3.myCells.values()) {
+            _0x386cbc.commanderPoints.add({ x: _0x188d46.animX, y: _0x188d46.animY, time: _0xb45f1b.time });
+            break;
+          }
+        }
       }
     }
     static ['playing2']() {
@@ -3126,6 +3508,12 @@
         for (const _0x4e2c94 of _0x14d4a3.myCells2.values()) {
           this.colorHex2 = _0x4e2c94.colorHex;
           break;
+        }
+        if ('on' === _0x2cc0f3.commander) {
+          for (const _0x1c6de9 of _0x14d4a3.myCells2.values()) {
+            _0x386cbc.commanderPoints.add({ x: _0x1c6de9.animX, y: _0x1c6de9.animY, time: _0xb45f1b.time });
+            break;
+          }
         }
       }
     }
@@ -3214,7 +3602,13 @@
       _0x2d5cce.nick();
     }
     static get ['nick']() {
-      return this._nick.substring(0, 15);
+      return this._nick ? this._nick.substring(0, 15) : '';
+    }
+    static set ["nick2"](_0x4397c5) {
+      this._nick2 = _0x4397c5;
+    }
+    static get ['nick2']() {
+      return this._nick2 ? this._nick2.substring(0, 15) : '';
     }
     static set ["arbSkin"](_0x591f79) {
       this._arbSkin = _0x591f79;
@@ -3230,13 +3624,16 @@
     static get ['skin']() {
       return this._skin;
     }
-    static set ['tag'](_0x3c927d) {
-      this._tag = _0x3c927d;
-      _0x2d5cce.tag();
+    static set ["skin2"](_0x1a9370) {
+      const _0x5518a5 = _0x386cbc.getImgurCode(_0x1a9370);
+      if ("XXXXXXX" !== _0x5518a5 && _0x5518a5) {
+        this._skin2 = _0x5518a5;
+      }
     }
-    static get ["tag"]() {
-      return this._tag;
+    static get ['skin2']() {
+      return this._skin2 || '';
     }
+
     static set ["colorObject"](_0x50d681) {
       this._colorObject.r = _0x50d681.r;
       this._colorObject.g = _0x50d681.g;
@@ -3259,7 +3656,8 @@
       return ':party' === _0x31c9b4.gMode ? _0x28c4c5 + this.colorHex : _0x28c4c5;
     }
     static get ["worldID2"]() {
-      let _0x5dbd66 = this._nick.substring(this._nick.indexOf('}') + 1);
+      const _0xsrc = this._nick2 || this._nick;
+      let _0x5dbd66 = _0xsrc.substring(_0xsrc.indexOf('}') + 1);
       _0x5dbd66 = _0x5dbd66.replace("%*^", '');
       return ":party" === _0x31c9b4.gMode ? _0x5dbd66 + this.colorHex2 : _0x5dbd66;
     }
@@ -3315,10 +3713,10 @@
       this.timeStamp = _0xb45f1b.time;
     }
     get ['mapX']() {
-      return (this.animX + 8000) / 16000 * _0x5cda9b.size;
+      return (this.animX - _0x996564.left) / _0x996564.edge * _0x5cda9b.size;
     }
     get ["mapY"]() {
-      return (this.animY + 8000) / 16000 * _0x5cda9b.size;
+      return (this.animY - _0x996564.top) / _0x996564.edge * _0x5cda9b.size;
     }
   }
   class _0x996564 {
@@ -3974,6 +4372,10 @@
     static ["getColor"](_0x16d8f4, _0x5f426b) {
       return 'rgb(' + (0 | _0x16d8f4.r * _0x5f426b) + ',' + (0 | _0x16d8f4.g * _0x5f426b) + ',' + (0 | _0x16d8f4.b * _0x5f426b) + ')';
     }
+    static ["getGrayscale"](_0x16d8f4, _0x5f426b) {
+      var _0xgray = 0 | (0.299 * _0x16d8f4.r * _0x5f426b + 0.587 * _0x16d8f4.g * _0x5f426b + 0.114 * _0x16d8f4.b * _0x5f426b);
+      return 'rgb(' + _0xgray + ',' + _0xgray + ',' + _0xgray + ')';
+    }
   }
   class _0x4c265b {
     constructor(_0x491bf5) {
@@ -4120,6 +4522,7 @@
         this.ws.onerror = () => {
           this.onError(1);
         };
+        _0xpartyNet.hookWs(this.ws);
       }
       if (_0x23e168) {
         this.ws2 = new WebSocket(_0x23e168, "algamees");
@@ -4136,6 +4539,7 @@
         this.ws2.onerror = () => {
           this.onError(2);
         };
+        _0xpartyNet.hookWs(this.ws2);
         this.ip = _0x23e168;
         console.log("Connecting to: " + _0x23e168);
       }
@@ -4357,10 +4761,6 @@
         _0x55e445 = !!(32 & _0x8aab7f);
         _0x2283b5 = !!(64 & _0x8aab7f);
         _0xd54ce1 = !!(128 & _0x8aab7f);
-        if (_0x49c709) {
-          _0x449cb9.readUInt32();
-          _0x449cb9.readUInt8();
-        }
         if (_0x2283b5) {
           _0x449cb9.readInt32();
         }
@@ -4443,7 +4843,7 @@
         _0x35833d = _0x1d0b9f.readUInt16();
         _0x54147a = _0x1d0b9f.readUInt32();
         _0x19bafb = _0x1d0b9f.readStringZeroUtf8() || "unnamed cell";
-        _0xa916b.add(_0x19bafb, _0x35833d || 1, false, false, false);
+        _0xa916b.add(_0x19bafb, _0x35833d || 1, false, false, false, _0x54147a);
       }
       _0xa916b.update();
     }
@@ -4567,15 +4967,19 @@
       const _0x115240 = _0x90a1a7.typeID;
       if (this.chekConnection(_0x115240) && (!_0x90a1a7._isAlive && 1 === _0x115240 || !_0x90a1a7._isAlive2 && 2 === _0x115240)) {
         _0xddb6d6.isSpectating = false;
-        if ('' === _0x90a1a7.nick) {
-          _0x90a1a7.nick = "Unnamed cell";
+        const _0xisTab2 = _0x115240 === 2;
+        if ('' === (_0xisTab2 ? _0x90a1a7.nick2 : _0x90a1a7.nick)) {
+          _0xisTab2 ? _0x90a1a7.nick2 = "Unnamed cell" : _0x90a1a7.nick = "Unnamed cell";
         }
-        let _0x4a58df = unescape(encodeURIComponent(_0x90a1a7.nick));
-        let _0x1084d5 = unescape(encodeURIComponent("free/" + _0x2a0c5c.arbSkin));
+        let _0x4a58df = unescape(encodeURIComponent(_0xisTab2 ? _0x90a1a7.nick2 : _0x90a1a7.nick));
+        let _0x1084d5 = unescape(encodeURIComponent("free/" + (_0xisTab2 ? _0x90a1a7.arbSkin : _0x2a0c5c.arbSkin)));
         const _0x4208f8 = {
           'n': _0x4a58df
         };
-        if (_0x90a1a7.arbSkin) {
+        if (_0xisTab2 && _0x90a1a7.skin2 && !String(_0x90a1a7.skin2).includes("XXXXXXX")) {
+          _0x4208f8.s = unescape(encodeURIComponent(_0x90a1a7.skin2));
+          _0x4208f8.w = '';
+        } else if (_0x90a1a7.arbSkin) {
           _0x4208f8.s = _0x1084d5;
           _0x4208f8.w = '';
         }
@@ -4665,10 +5069,13 @@
       this.teamData = _0x5e31b7;
       this.biggestIsOn = false;
       this.biggest = new _0xb33099(0);
+      this.partyCells = new Map();
     }
     static ["clear"]() {
-      this.teamPlayers.clear();
-      console.log("cleared");
+      for (const _key of this.teamPlayers.keys()) {
+        if (typeof _key === 'number') this.teamPlayers["delete"](_key);
+      }
+      this.partyCells.clear();
     }
     static ['remove'](_0x3660b6) {
       this.teamPlayers["delete"](_0x3660b6);
@@ -4907,16 +5314,18 @@
       }
     }
     static ["tag"]() {
-      if (_0x1530af.connected) {
-        const _0x35e0be = _0x90a1a7.tag;
-        let _0x21b532 = _0x35e0be.length;
-        const _0x427eb0 = this.createView(3 + _0x35e0be.length);
-        _0x427eb0.setUint8(0, 8, true);
-        for (_0x427eb0.setUint8(1, 2, true); _0x21b532--;) {
-          _0x427eb0.setUint8(_0x21b532 + 2, _0x35e0be.charCodeAt(_0x21b532), true);
+      const _0x35e0be = _0x90a1a7.tag;
+      if (_0x35e0be && _0x35e0be.length > 0) {
+        if (_0x1530af.connected) {
+          let _0x21b532 = _0x35e0be.length;
+          const _0x427eb0 = this.createView(2 + _0x35e0be.length);
+          _0x427eb0.setUint8(0, 4, true);
+          for (; _0x21b532--;) {
+            _0x427eb0.setUint8(_0x21b532 + 1, _0x35e0be.charCodeAt(_0x21b532), true);
+          }
+          _0x427eb0.setUint8(1 + _0x35e0be.length, 0, true);
+          _0x1530af.send(_0x427eb0.buffer);
         }
-        _0x427eb0.setUint8(2 + _0x35e0be.length, 0, true);
-        _0x1530af.send(_0x427eb0.buffer);
       }
     }
     static ["positionMass"]() {
@@ -4999,6 +5408,13 @@
       this.rgbTeammates = new Set();
       this.indicator = this.cacheIndicator();
       this.getKnownSkins();
+      this._bgImage = new Image();
+      this._bgImage.crossOrigin = "anonymous";
+      this._bgReady = false;
+      this._ceImage = new Image();
+      this._ceImage.crossOrigin = "anonymous";
+      this._ceReady = false;
+      this._loadCeImage(_0x480be4.commanderImageUrl);
       _0x51fad0.init();
       _0x2ab3a8.init();
       this.resizeCanvas();
@@ -5006,18 +5422,48 @@
         this.resizeCanvas();
       };
     }
+    static ["_loadCeImage"](_0x2c6a91) {
+      this._ceReady = false;
+      if (_0x2c6a91 && _0x2c6a91.length > 0) {
+        this._ceImage = new Image();
+        this._ceImage.crossOrigin = "anonymous";
+        this._ceImage.onload = () => { this._ceReady = true; };
+        this._ceImage.onerror = () => { this._ceReady = false; };
+        this._ceImage.src = _0x2c6a91;
+      }
+    }
+    static ["_loadBgImage"](_0x1a2b3c) {
+      if (_0x1a2b3c && _0x1a2b3c.length > 0) {
+        this._bgImage = new Image();
+        this._bgImage.crossOrigin = "anonymous";
+        this._bgImage.onload = () => { this._bgReady = true; };
+        this._bgImage.onerror = () => { this._bgReady = false; };
+        this._bgImage.src = _0x1a2b3c;
+      } else {
+        this._bgReady = false;
+      }
+    }
     static ["resizeCanvas"]() {
       this.canvas.width = 0 | _0x1c478d.innerWidth;
       this.canvas.height = 0 | _0x1c478d.innerHeight;
     }
     static ["run"]() {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      this.ctx.imageSmoothingEnabled = _0x2cc0f3.antiAliasing === "on";
       this.ctx.save();
       this.vanillaGrid();
       const _0x810445 = (this.canvas.width >> 1) / _0xddb6d6.viewport - _0xddb6d6.x;
       const _0x2de058 = (this.canvas.height >> 1) / _0xddb6d6.viewport - _0xddb6d6.y;
       this.ctx.scale(_0xddb6d6.viewport, _0xddb6d6.viewport);
       this.ctx.translate(_0x810445, _0x2de058);
+      if (this._bgReady) {
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.rect(_0x996564.left, _0x996564.top, _0x996564.edge, _0x996564.edge);
+        this.ctx.clip();
+        this.ctx.drawImage(this._bgImage, _0x996564.left, _0x996564.top, _0x996564.edge, _0x996564.edge);
+        this.ctx.restore();
+      }
       _0x2ab3a8.update();
       _0x51fad0.render();
       this.border();
@@ -5059,9 +5505,68 @@
     static ["border"]() {
       const _0x3f1e55 = this.ctx;
       const _0x1b4ff4 = _0x480be4.borderWidth >> 1;
-      _0x3f1e55.strokeStyle = _0x480be4.borderColor;
-      _0x3f1e55.lineWidth = _0x480be4.borderWidth;
-      _0x3f1e55.strokeRect(_0x996564.left - _0x1b4ff4, _0x996564.top - _0x1b4ff4, _0x996564.edge + _0x480be4.borderWidth, _0x996564.edge + _0x480be4.borderWidth);
+      const _0x1b2d38 = _0x480be4.borderOpacity / 10;
+      _0x3f1e55.globalAlpha = _0x1b2d38;
+      if (_0x480be4.borderGlowSize > 0) {
+        _0x3f1e55.shadowBlur = ~~_0x480be4.borderGlowSize;
+        _0x3f1e55.shadowColor = _0x480be4.borderGlowColor;
+      }
+      if (_0x480be4.rainbowBorder !== "on") {
+        _0x3f1e55.strokeStyle = _0x480be4.borderColor;
+        _0x3f1e55.lineWidth = _0x480be4.borderWidth;
+        _0x3f1e55.strokeRect(_0x996564.left - _0x1b4ff4, _0x996564.top - _0x1b4ff4, _0x996564.edge + _0x480be4.borderWidth, _0x996564.edge + _0x480be4.borderWidth);
+        _0x3f1e55.shadowBlur = 0;
+        _0x3f1e55.shadowColor = 'transparent';
+        _0x3f1e55.globalAlpha = 1;
+        return;
+      }
+      const _0x14e95b = _0x480be4.borderWidth;
+      const _0x2f4167 = _0x996564.left - _0x1b4ff4;
+      const _0x531a16 = _0x996564.top - _0x1b4ff4;
+      const _0x3e7362 = _0x996564.edge + _0x14e95b;
+      const _0x18ec80 = _0x996564.edge + _0x14e95b;
+      const _0x298e0a = (_0x480be4._rainbowHue || 0) % 360;
+      _0x480be4._rainbowHue = _0x298e0a + 2;
+      const _0x1fce1b = _0x298e0a;
+      const _0x2c7ca7 = (_0x298e0a + 72) % 360;
+      const _0x4289cc = (_0x298e0a + 144) % 360;
+      const _0x1d5a73 = (_0x298e0a + 216) % 360;
+      const _0x160a8f = (_0x298e0a + 288) % 360;
+      let _0x22cafb = _0x3f1e55.createLinearGradient(_0x2f4167, _0x531a16, _0x2f4167, _0x531a16 + _0x18ec80);
+      _0x22cafb.addColorStop(0, "hsl(" + _0x1fce1b + ",100%,50%)");
+      _0x22cafb.addColorStop(0.25, "hsl(" + _0x2c7ca7 + ",100%,50%)");
+      _0x22cafb.addColorStop(0.5, "hsl(" + _0x4289cc + ",100%,50%)");
+      _0x22cafb.addColorStop(0.75, "hsl(" + _0x1d5a73 + ",100%,50%)");
+      _0x22cafb.addColorStop(1, "hsl(" + _0x160a8f + ",100%,50%)");
+      _0x3f1e55.fillStyle = _0x22cafb;
+      _0x3f1e55.fillRect(_0x2f4167, _0x531a16, _0x14e95b, _0x18ec80);
+      _0x22cafb = _0x3f1e55.createLinearGradient(_0x2f4167 + _0x3e7362, _0x531a16, _0x2f4167 + _0x3e7362, _0x531a16 + _0x18ec80);
+      _0x22cafb.addColorStop(0, "hsl(" + _0x160a8f + ",100%,50%)");
+      _0x22cafb.addColorStop(0.25, "hsl(" + _0x1d5a73 + ",100%,50%)");
+      _0x22cafb.addColorStop(0.5, "hsl(" + _0x4289cc + ",100%,50%)");
+      _0x22cafb.addColorStop(0.75, "hsl(" + _0x2c7ca7 + ",100%,50%)");
+      _0x22cafb.addColorStop(1, "hsl(" + _0x1fce1b + ",100%,50%)");
+      _0x3f1e55.fillStyle = _0x22cafb;
+      _0x3f1e55.fillRect(_0x2f4167 + _0x3e7362 - _0x14e95b, _0x531a16, _0x14e95b, _0x18ec80);
+      _0x22cafb = _0x3f1e55.createLinearGradient(_0x2f4167 + _0x3e7362, _0x531a16, _0x2f4167, _0x531a16);
+      _0x22cafb.addColorStop(0, "hsl(" + _0x160a8f + ",100%,50%)");
+      _0x22cafb.addColorStop(0.25, "hsl(" + _0x1d5a73 + ",100%,50%)");
+      _0x22cafb.addColorStop(0.5, "hsl(" + _0x4289cc + ",100%,50%)");
+      _0x22cafb.addColorStop(0.75, "hsl(" + _0x2c7ca7 + ",100%,50%)");
+      _0x22cafb.addColorStop(1, "hsl(" + _0x1fce1b + ",100%,50%)");
+      _0x3f1e55.fillStyle = _0x22cafb;
+      _0x3f1e55.fillRect(_0x2f4167, _0x531a16, _0x3e7362, _0x14e95b);
+      _0x22cafb = _0x3f1e55.createLinearGradient(_0x2f4167, _0x531a16 + _0x18ec80, _0x2f4167 + _0x3e7362, _0x531a16 + _0x18ec80);
+      _0x22cafb.addColorStop(0, "hsl(" + _0x1fce1b + ",100%,50%)");
+      _0x22cafb.addColorStop(0.25, "hsl(" + _0x2c7ca7 + ",100%,50%)");
+      _0x22cafb.addColorStop(0.5, "hsl(" + _0x4289cc + ",100%,50%)");
+      _0x22cafb.addColorStop(0.75, "hsl(" + _0x1d5a73 + ",100%,50%)");
+      _0x22cafb.addColorStop(1, "hsl(" + _0x160a8f + ",100%,50%)");
+      _0x3f1e55.fillStyle = _0x22cafb;
+      _0x3f1e55.fillRect(_0x2f4167, _0x531a16 + _0x18ec80 - _0x14e95b, _0x3e7362, _0x14e95b);
+      _0x3f1e55.shadowBlur = 0;
+      _0x3f1e55.shadowColor = 'transparent';
+      _0x3f1e55.globalAlpha = 1;
     }
     static ['cells']() {
       const _0xfdf4f4 = this.ctx;
@@ -5103,11 +5608,82 @@
         if (_0x5987fa.isVirus) {
           _0xfdf4f4.fillStyle = _0x480be4.virusColor;
           _0xfdf4f4.globalAlpha = 0.7;
+          if (_0x480be4.virusGlow === "on") {
+            _0xfdf4f4.shadowBlur = ~~(_0x480be4.virusGlowSize * _0x480be4.virusGlowStrength / 5);
+            _0xfdf4f4.shadowColor = _0x480be4.virusGlowColor;
+          }
           _0xfdf4f4.fill();
+          _0xfdf4f4.shadowBlur = 0;
+          _0xfdf4f4.shadowColor = 'transparent';
           _0xfdf4f4.globalAlpha = 1;
           _0xfdf4f4.stroke();
-        } else {
+          if (_0x2cc0f3.virusRing === 'on') {
+            const _0x2cx = _0x5987fa.animX - _0x1241cd.x;
+            const _0x2cy = _0x5987fa.animY - _0x1241cd.y;
+            const _0x2cr = _0x5987fa.animRadius + 5;
+            const _0x2teeth = 16;
+            const _0x2step = this.pi2 / _0x2teeth;
+            const _0x2toothH = _0x2cr * _0x480be4.virusRingWidth / 100;
+            const _0x2outerR = _0x2cr + _0x2toothH;
+            const _0x2innerR = _0x2cr;
+            const _0x2ctrlR = _0x2innerR + _0x2toothH * 0.7;
+            const _0x2rot = (_0xb45f1b.time / 3000 * (_0x480be4.globalRotationSpeed || 5)) % this.pi2;
+            _0xfdf4f4.save();
+            _0xfdf4f4.translate(_0x2cx, _0x2cy);
+            _0xfdf4f4.rotate(_0x2rot);
+            _0xfdf4f4.fillStyle = _0x480be4.virusGearColor || _0x480be4.virusRingColor;
+            _0xfdf4f4.globalAlpha = 0.8;
+            for (let _0x2i = 0; _0x2i < _0x2teeth; _0x2i++) {
+              const _0x2a = _0x2i * _0x2step;
+              const _0x2l = _0x2a - _0x2step * 0.3;
+              const _0x2c = _0x2a + _0x2step * 0.3;
+              _0xfdf4f4.beginPath();
+              _0xfdf4f4.moveTo(Math.cos(_0x2l) * _0x2innerR, Math.sin(_0x2l) * _0x2innerR);
+              _0xfdf4f4.quadraticCurveTo(Math.cos(_0x2l) * _0x2ctrlR, Math.sin(_0x2l) * _0x2ctrlR, Math.cos(_0x2a) * _0x2outerR, Math.sin(_0x2a) * _0x2outerR);
+              _0xfdf4f4.quadraticCurveTo(Math.cos(_0x2c) * _0x2ctrlR, Math.sin(_0x2c) * _0x2ctrlR, Math.cos(_0x2c) * _0x2innerR, Math.sin(_0x2c) * _0x2innerR);
+              _0xfdf4f4.closePath();
+              _0xfdf4f4.fill();
+            }
+            _0xfdf4f4.globalAlpha = 1;
+            _0xfdf4f4.restore();
+            _0xfdf4f4.strokeStyle = _0x480be4.virusBorderColor;
+            _0xfdf4f4.lineWidth = _0x480be4.virusBorderWidth;
+          }
+          if (_0x2cc0f3.virusMass === "text") {
+            const _0x175afd = _0x5987fa.animX - _0x1241cd.x;
+            const _0x4f4e2b = _0x5987fa.animY - _0x1241cd.y;
+            const _0x4edbb9 = ~~_0x5987fa.animRadius * 0.3;
+            _0xfdf4f4.fillStyle = "rgba(0,0,0,0.7)";
+            _0xfdf4f4.font = "bold " + Math.max(12, _0x4edbb9) + "px ubuntu";
+            _0xfdf4f4.textAlign = "center";
+            _0xfdf4f4.textBaseline = "middle";
+            _0xfdf4f4.fillText(_0x5987fa.mass, _0x175afd + 1, _0x4f4e2b + 1);
+            _0xfdf4f4.fillStyle = "#fff";
+            _0xfdf4f4.fillText(_0x5987fa.mass, _0x175afd, _0x4f4e2b);
+          } else if (_0x2cc0f3.virusMass === "fill") {
+            const _0x175afd = _0x5987fa.animX - _0x1241cd.x;
+            const _0x4f4e2b = _0x5987fa.animY - _0x1241cd.y;
+            const _0x2massProg = Math.min(1, Math.max(0, (_0x5987fa.mass - 100) / 100));
+            const _0x2fillR = _0x5987fa.animRadius * _0x2massProg;
+            _0xfdf4f4.save();
+            _0xfdf4f4.globalAlpha = 0.8;
+            _0xfdf4f4.fillStyle = _0x480be4.virusBorderColor;
+            _0xfdf4f4.beginPath();
+            _0xfdf4f4.arc(_0x175afd, _0x4f4e2b, _0x2fillR, 0, this.pi2, true);
+            _0xfdf4f4.closePath();
+            _0xfdf4f4.fill();
+            _0xfdf4f4.globalAlpha = 1;
+            _0xfdf4f4.restore();
+          }
+        } else if (_0x5987fa.isFood && _0x2cc0f3.foodGlow === "on") {
           _0xfdf4f4.fillStyle = _0x2ab3a8.getColor(_0x5987fa.colorObject, _0x30af86);
+          _0xfdf4f4.shadowBlur = ~~(_0x480be4.foodGlowSize * _0x480be4.foodGlowStrength / 5);
+          _0xfdf4f4.shadowColor = _0x480be4.foodGlowColor;
+          _0xfdf4f4.fill();
+          _0xfdf4f4.shadowBlur = 0;
+          _0xfdf4f4.shadowColor = 'transparent';
+        } else {
+          _0xfdf4f4.fillStyle = _0x2cc0f3.grayscaleInactive === "on" && _0x5987fa.isMine && _0x5987fa.cellType !== _0x90a1a7.typeID ? _0x2ab3a8.getGrayscale(_0x5987fa.colorObject, _0x30af86) : _0x2ab3a8.getColor(_0x5987fa.colorObject, _0x30af86);
           if (_0x5ab10a * _0x21653d < 1) {
             _0xfdf4f4.globalAlpha = _0x5ab10a * _0x21653d;
             _0xfdf4f4.fill();
@@ -5144,6 +5720,24 @@
           _0xfdf4f4.strokeStyle = _0x480be4.virusBorderColor;
           _0xfdf4f4.lineWidth = _0x480be4.virusBorderWidth;
         }
+        if (_0x2cc0f3.multiboxShield === "on" && _0x5987fa.isMine && _0x480be4._shieldReady) {
+          const _0x3b92c8 = _0x5987fa.animRadius * 2.8;
+          _0xfdf4f4.drawImage(_0x480be4.shieldImage, _0x5987fa.animX - _0x1241cd.x - _0x3b92c8 / 2, _0x5987fa.animY - _0x1241cd.y - _0x3b92c8 / 2, _0x3b92c8, _0x3b92c8);
+        }
+        if (_0x2cc0f3.cellLuminous === "on" && _0x5987fa.isMine) {
+          _0xfdf4f4.shadowBlur = 30;
+          _0xfdf4f4.shadowColor = _0x2ab3a8.getColor(_0x5987fa.colorObject, _0x30af86);
+          _0xfdf4f4.beginPath();
+          _0xfdf4f4.arc(_0x5987fa.animX - _0x1241cd.x, _0x5987fa.animY - _0x1241cd.y, _0x5987fa.animRadius + 5, 0, this.pi2, true);
+          _0xfdf4f4.closePath();
+          _0xfdf4f4.fill();
+          _0xfdf4f4.shadowBlur = 0;
+          _0xfdf4f4.shadowColor = 'transparent';
+        }
+        if (_0x480be4.maouCircle === "on" && _0x5987fa.isMine && _0x480be4._maouReady) {
+          const _0x49e3f8 = _0x5987fa.animRadius * 2.6;
+          _0xfdf4f4.drawImage(_0x480be4.maouCanvas, _0x5987fa.animX - _0x1241cd.x - _0x49e3f8 / 2, _0x5987fa.animY - _0x1241cd.y - _0x49e3f8 / 2, _0x49e3f8, _0x49e3f8);
+        }
         if (_0x21653d === 1 && (_0x5987fa.isMine && !_0x8efbd4 || !_0x5987fa.isMine && _0x54c029)) {
           const _0x14859d = _0x34f3bb.nick(_0x5987fa);
           if (_0x14859d) {
@@ -5156,7 +5750,7 @@
             }
           }
         }
-        if (_0x21653d === 1 && (_0x5987fa.isMine && !_0x5c97e3 || !_0x5987fa.isMine && _0x7ae23d)) {
+        if (_0x21653d === 1 && !_0x5987fa.isVirus && (_0x5987fa.isMine && !_0x5c97e3 || !_0x5987fa.isMine && _0x7ae23d)) {
           const _0x2e6835 = _0x34f3bb.mass(_0x5987fa);
           if (_0x2e6835) {
             const _0x1c92d8 = _0x494dac === 'on' ? _0x5987fa.animRadius : _0x494dac === "stepped" ? 50 + 75 * (_0x5987fa.animRadius / 75 | 0) : _0x5987fa.radius;
@@ -5171,14 +5765,68 @@
         }
       }
     }
+    static ["partyCells"]() {
+      const _ctx = this.ctx;
+      const _viewAlpha = _0x480be4.cellTransparency / 100;
+      for (const [_pid, _cells] of _0x12ac51.partyCells) {
+        const _pp = _0x12ac51.teamPlayers.get(_pid);
+        if (!_pp) continue;
+        const _wid = _pp.worldID;
+        const _hasSkin = this.skinMap.has(_wid);
+        for (let _ci = 0; _ci < _cells.length; _ci++) {
+          const _c = _cells[_ci];
+          const _pr = _c.r;
+          const _px = _c.x;
+          const _py = _c.y;
+          _ctx.beginPath();
+          _ctx.arc(_px, _py, _pr + 5, 0, this.pi2, true);
+          _ctx.closePath();
+          if (_hasSkin) {
+            const _ps = this.getCustomSkin(_pp.worldID);
+            if (_ps) {
+              _ctx.drawImage(_ps, _px - _pr - 5, _py - _pr - 5, 2 * (_pr + 5), 2 * (_pr + 5));
+            }
+          } else {
+            _ctx.globalAlpha = _viewAlpha;
+            _ctx.fillStyle = _pp.colorHex || '#555';
+            _ctx.fill();
+            _ctx.globalAlpha = 1;
+          }
+          _ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+          _ctx.lineWidth = 2;
+          _ctx.stroke();
+          if (_ci === 0 && _pp.nick) {
+            const _nf = 'bold ' + Math.max(12, _pr * 0.3) + 'px Ubuntu';
+            _ctx.font = _nf;
+            _ctx.fillStyle = '#fff';
+            _ctx.textAlign = 'center';
+            _ctx.textBaseline = 'bottom';
+            _ctx.fillText(_pp.nick, _px, _py - _pr - 5);
+          }
+          if (_c.m > 0) {
+            const _mf = Math.max(12, _pr * 0.3) + 'px Ubuntu';
+            _ctx.font = _mf;
+            _ctx.fillStyle = '#fff';
+            _ctx.textAlign = 'center';
+            _ctx.textBaseline = 'middle';
+            _ctx.fillText(_c.m, _px, _py);
+          }
+        }
+      }
+    }
     static ["createSkinMap"]() {
       this.arbSkin = _0x14f7b2("#arbSkin").val();
       this.skinMap.clear();
       if (!_0x90a1a7.skin.includes("XXXXXXX")) {
         this.skinMap.set(_0x90a1a7.worldID, this.code2Url(_0x90a1a7.skin));
-        this.skinMap.set(_0x90a1a7.worldID2, this.code2Url(_0x90a1a7.skin));
       } else if (this.arbSkin) {
         this.skinMap.set(_0x90a1a7.worldID, "https://patient-leaf-2f1a.maamargasouma.workers.dev/res/skins/free/" + this.arbSkin.replace(/free\/|.png/g, '') + ".png");
+      }
+      if (_0x90a1a7.skin2 && !_0x90a1a7.skin2.includes("XXXXXXX")) {
+        this.skinMap.set(_0x90a1a7.worldID2, this.code2Url(_0x90a1a7.skin2));
+      } else if (!_0x90a1a7.skin.includes("XXXXXXX")) {
+        this.skinMap.set(_0x90a1a7.worldID2, this.code2Url(_0x90a1a7.skin));
+      } else if (this.arbSkin) {
         this.skinMap.set(_0x90a1a7.worldID2, "https://patient-leaf-2f1a.maamargasouma.workers.dev/res/skins/free/" + this.arbSkin.replace(/free\/|.png/g, '') + '.png');
       }
       for (const _0x5d3988 of _0x12ac51.teamPlayers.values()) if (_0x5d3988.isAlive && !_0x5d3988.skin.includes("XXXXXXX")) {
@@ -5259,27 +5907,50 @@
     static ["commands"]() {
       const _0x5b9c43 = this.ctx;
       const _0x41c288 = 'off' === _0x2cc0f3.commander;
-      _0x5b9c43.strokeStyle = "#ffffff";
-      _0x5b9c43.lineWidth = 5;
       for (const _0x52ff22 of this.commanderPoints.values()) {
         const _0x537d77 = _0x52ff22.x;
         const _0x130956 = _0x52ff22.y;
         const _0x266134 = _0xb45f1b.time - _0x52ff22.time;
-        if (_0x266134 > 1250) {
+        if (_0x266134 > 2000) {
           this.commanderPoints['delete'](_0x52ff22);
         } else {
-          if (!(_0x41c288 || 1 > _0x266134)) {
-            const _0xa9830a = 1000 * _0x266134 / 1250;
-            _0x5b9c43.globalAlpha = _0xa9830a > 333 ? (1000 - _0xa9830a) / 667 : 1;
-            const _0x42effd = _0x5b9c43.createRadialGradient(_0x537d77, _0x130956, 0.7 * _0xa9830a, _0x537d77, _0x130956, _0xa9830a);
-            _0x42effd.addColorStop(0, "rgba(0,0,0,0)");
-            _0x42effd.addColorStop(1, _0x480be4.commanderColor);
-            _0x5b9c43.fillStyle = _0x42effd;
-            _0x5b9c43.beginPath();
-            _0x5b9c43.arc(_0x537d77, _0x130956, _0xa9830a, 0, this.pi2, true);
-            _0x5b9c43.closePath();
-            _0x5b9c43.fill();
-            _0x5b9c43.stroke();
+          if (!(_0x41c288 || 50 > _0x266134)) {
+            const _0xa9830a = 1000 * _0x266134 / 2000;
+            const _0x3bc5a1 = _0xa9830a > 333 ? (1000 - _0xa9830a) / 667 : 1;
+            const _0x5c9d41 = 200 * _0xa9830a / 1000 * 8;
+            const _0x1d25a8 = _0x266134 / 1000 * (_0x480be4.globalRotationSpeed || 5);
+            _0x5b9c43.save();
+            _0x5b9c43.globalAlpha = _0x3bc5a1;
+            _0x5b9c43.translate(_0x537d77, _0x130956);
+            if (this._ceReady) {
+              _0x5b9c43.save();
+              _0x5b9c43.rotate(_0x1d25a8 * 3);
+              _0x5b9c43.drawImage(this._ceImage, -_0x5c9d41, -_0x5c9d41, _0x5c9d41 * 2, _0x5c9d41 * 2);
+              _0x5b9c43.restore();
+            } else if (_0x480be4._maouReady) {
+              _0x5b9c43.save();
+              _0x5b9c43.rotate(_0x1d25a8 * 3);
+              _0x5b9c43.drawImage(_0x480be4.maouOuter, -_0x5c9d41, -_0x5c9d41, _0x5c9d41 * 2, _0x5c9d41 * 2);
+              _0x5b9c43.restore();
+              _0x5b9c43.save();
+              _0x5b9c43.rotate(-_0x1d25a8 * 2);
+              _0x5b9c43.drawImage(_0x480be4.maouInner, -_0x5c9d41, -_0x5c9d41, _0x5c9d41 * 2, _0x5c9d41 * 2);
+              _0x5b9c43.restore();
+            } else {
+              const _0x47c30e = 1000 * _0x266134 / 2000;
+              const _0x490014 = _0x5b9c43.createRadialGradient(0, 0, 0.7 * _0x47c30e, 0, 0, _0x47c30e);
+              _0x490014.addColorStop(0, "rgba(0,0,0,0)");
+              _0x490014.addColorStop(1, _0x480be4.commanderColor);
+              _0x5b9c43.fillStyle = _0x490014;
+              _0x5b9c43.beginPath();
+              _0x5b9c43.arc(0, 0, _0x47c30e, 0, this.pi2);
+              _0x5b9c43.closePath();
+              _0x5b9c43.fill();
+              _0x5b9c43.strokeStyle = "#ffffff";
+              _0x5b9c43.lineWidth = 5;
+              _0x5b9c43.stroke();
+            }
+            _0x5b9c43.restore();
           }
         }
       }
@@ -5287,7 +5958,7 @@
     static ["mouseTracker"]() {
       if ("off" !== _0x2cc0f3.cursorLine) {
         const _0x33c20a = this.ctx;
-        _0x33c20a.strokeStyle = "#fff";
+        _0x33c20a.strokeStyle = _0x480be4.cursorLineColor;
         _0x33c20a.lineWidth = 4;
         _0x33c20a.lineCap = "round";
         _0x33c20a.lineJoin = "round";
@@ -5407,4 +6078,164 @@
       return window.atob(window.atob(window.atob(this.apiUrl)));
     }
   }.init()));
+  const _0xpartyNet = {
+    _ws: null,
+    _ws2: null,
+    _inParty: false,
+    _partyCode: '',
+    _members: {},
+
+    init() {
+      this._t = document.getElementById('party-token');
+      this._c = document.getElementById('create-party');
+      this._j = document.getElementById('join-party');
+      this._l = document.getElementById('party-leave');
+      this._d = document.getElementById('party-code-display');
+
+      if (this._c) this._c.addEventListener('click', () => this.createParty());
+      if (this._j) this._j.addEventListener('click', () => this.joinParty((this._t?.value || '').trim()));
+      if (this._t) this._t.addEventListener('keydown', e => e.key === 'Enter' && this.joinParty((this._t?.value || '').trim()));
+      if (this._l) this._l.addEventListener('click', () => this.leaveParty());
+    },
+
+    _updateUI() {
+      if (this._c) this._c.style.display = this._inParty ? 'none' : '';
+      if (this._j) this._j.style.display = this._inParty ? 'none' : '';
+      if (this._t) this._t.style.display = this._inParty ? 'none' : '';
+      if (this._l) this._l.style.display = this._inParty ? '' : 'none';
+      if (this._d) {
+        this._d.style.display = this._inParty && this._partyCode ? '' : 'none';
+        this._d.textContent = this._inParty ? 'Party: ' + this._partyCode : '';
+      }
+    },
+
+    hookWs(ws) {
+      if (!this._ws) {
+        this._ws = ws;
+      }
+      const orig = ws.onmessage;
+      ws.onmessage = (e) => {
+        this._interceptMessage(e) || (orig && orig.call(ws, e));
+      };
+    },
+
+    _send(b) {
+      if (!this._ws || this._ws.readyState !== WebSocket.OPEN) return false;
+      this._ws.send(new Uint8Array(b).buffer);
+      return true;
+    },
+
+    createParty() {
+      this._send([0x55, 0x01]);
+    },
+
+    joinParty(code) {
+      if (!code) return;
+      code = code.replace(/https?:\/\/(www\.)?3rb\.io\/?/i, '').replace(/^#+/, '#');
+      const enc = new TextEncoder();
+      const raw = enc.encode(code);
+      const buf = new Uint8Array(2 + raw.length);
+      buf[0] = 0x55; buf[1] = 0x03;
+      buf.set(raw, 2);
+      this._send(Array.from(buf));
+    },
+
+    leaveParty() {
+      this._send([0x55, 0x02]);
+      this._inParty = false;
+      this._partyCode = '';
+      this._members = {};
+      this._cleanTeamPlayers();
+      this._updateUI();
+      _0x40f48a.normal("Party", "Left party");
+    },
+
+    _cleanTeamPlayers() {
+      for (const _k of _0x12ac51.teamPlayers.keys()) {
+        if (typeof _k === 'string') _0x12ac51.teamPlayers["delete"](_k);
+      }
+      _0x12ac51.partyCells.clear();
+    },
+
+    _interceptMessage(e) {
+      const d = e.data;
+      if (!(d instanceof ArrayBuffer) || d.byteLength < 2) return false;
+      const v = new DataView(d);
+      const op = v.getUint8(0);
+
+      if (op === 0x55) {
+        let p = 1;
+        const c = [];
+        while (p < v.byteLength && v.getUint8(p) !== 0) { c.push(String.fromCharCode(v.getUint8(p))); p++; }
+        const code = c.join('');
+        if (!code || code === 'error') { this.leaveParty(); return false; }
+        this._inParty = true;
+        this._partyCode = code;
+        this._updateUI();
+        return false;
+      }
+
+      if (op === 0x57) {
+        let off = 1;
+        const cnt = v.getUint16(off, true); off += 2;
+        const nm = {};
+        const newPartyCells = new Map();
+        for (let i = 0; i < cnt; i++) {
+          if (off + 4 > v.byteLength) break;
+          const id = v.getUint32(off, true); off += 4;
+          const nb = [];
+          while (off < v.byteLength && v.getUint8(off) !== 0) { nb.push(String.fromCharCode(v.getUint8(off))); off++; }
+          off++;
+          const name = nb.join('');
+          if (off + 3 > v.byteLength) break;
+          const r = v.getUint8(off++);
+          const g = v.getUint8(off++);
+          const b = v.getUint8(off++);
+          const col = '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+          if (off + 12 > v.byteLength) break;
+          const sz = v.getInt32(off, true); off += 4;
+          const px = v.getInt32(off, true); off += 4;
+          const py = v.getInt32(off, true); off += 4;
+          nm[id] = { id, name, col, px, py };
+          newPartyCells.set(id.toString(), [{ x: px, y: py, r: Math.abs(sz) || 50 }]);
+        }
+        this._members = nm;
+        _0x12ac51.partyCells = newPartyCells;
+        for (const mid in nm) {
+          const nmd = nm[mid];
+          let p = _0x12ac51.teamPlayers.get(mid);
+          if (!p) {
+            p = new _0xb33099(mid);
+            p.nick = nmd.name;
+            p.colorHex = nmd.col;
+            p.team = 1;
+            p.isAlive = 1;
+            _0x12ac51.teamPlayers.set(mid, p);
+          }
+          p.x = nmd.px;
+          p.y = nmd.py;
+          p.animX = nmd.px;
+          p.animY = nmd.py;
+          p.timeStamp = performance.now();
+        }
+        for (const _k of _0x12ac51.teamPlayers.keys()) {
+          if (typeof _k === 'string' && !nm[_k]) _0x12ac51.teamPlayers["delete"](_k);
+        }
+        return true;
+      }
+
+      if (op === 0x59) {
+        this._inParty = false;
+        this._members = {};
+        this._partyCode = '';
+        this._cleanTeamPlayers();
+        this._updateUI();
+        _0x40f48a.normal("Party", "Party disbanded");
+        return true;
+      }
+
+      return false;
+    }
+  };
+  _0xpartyNet.init();
 }(window, $, document);
