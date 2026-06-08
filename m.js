@@ -6115,7 +6115,12 @@
       }
       const orig = ws.onmessage;
       ws.onmessage = (e) => {
-        this._interceptMessage(e) || (orig && orig.call(ws, e));
+        try {
+          if (this._interceptMessage(e)) return;
+        } catch (err) {
+          console.warn("Party intercept error:", err);
+        }
+        if (orig) orig.call(ws, e);
       };
     },
 
