@@ -3812,10 +3812,9 @@
         if (this._isAlive2) {
           this.type = 2;
           PacketSender.spectate(1);
+        } else if (this._isAlive3 && WsConnection.ws3) {
+          this.promoteTabFromBackup(1);
         } else {
-          // combined isAlive (_isAlive || _isAlive2) just flipped to false -
-          // playing()/playing2() tell the relay on the alive->true edge,
-          // this is the matching dead->true->false edge that was missing.
           RelaySender.aliveStatus();
           this.setInfo();
         }
@@ -3827,11 +3826,22 @@
         if (this._isAlive) {
           this.type = 1;
           PacketSender.spectate(2);
+        } else if (this._isAlive3 && WsConnection.ws3) {
+          this.promoteTabFromBackup(2);
         } else {
           RelaySender.aliveStatus();
           this.setInfo();
         }
       }
+    }
+    static ["promoteTabFromBackup"](killed) {
+      CellData.promoteTab(3, killed);
+      Player.promoteTab(3, killed);
+      WorldData.promoteTab(3, killed);
+      WsConnection.promoteTab(3, killed);
+      this.type = killed;
+      Notifications.alert("Drag+", "Backup Tab 3 promoted to Tab " + killed);
+      WsConnection.connectTab(3);
     }
     static ["dead3"]() {
       // Tab 3 is backup-only — auto-respawn silently
