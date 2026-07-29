@@ -4113,7 +4113,7 @@
       // Strip RTL/LTR bidi control marks (common around Arabic/Hebrew
       // names mixed with English text) so the extracted name displays
       // cleanly and matches consistently for nick->id lookups.
-      return dg.replace(/[â€ژâ€ڈâ€ھ-â€®âپ¦-âپ©]/g, "").trim();
+      return dg.replace(/[\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, "").trim();
     }
     static ["resolveIdByNick"](zf) {
       if (this.nickToId.has(zf)) {
