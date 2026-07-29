@@ -6701,7 +6701,7 @@
       const ajs = Settings.hideOwnNick === "on";
       const afz = Settings.hideOwnMass === "on";
       const jy = Settings.urlSkins === "on";
-      const if = Settings.arbSkins === "on";
+      const arb = Settings.arbSkins === "on";
       const aal = Settings.teamIndicator === "on";
       const nl = Settings.multiboxRing === "on";
       const en = Theme.indicatorSize;
