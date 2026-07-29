@@ -59,8 +59,8 @@
     static ["reset"]() {
       if (!this.get("extras", "resetted")) {
         for (const key in localStorage)
-          if (do.substring(0, 5) === this.oldPrefix) {
-            localStorage.removeItem(do);
+          if (key.substring(0, 5) === this.oldPrefix) {
+            localStorage.removeItem(key);
           }
         this.set("extras", "resetted", true);
       }
