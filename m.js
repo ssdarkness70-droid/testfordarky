@@ -1315,8 +1315,8 @@
           if (2 === rj) {
             $(rh[la]).removeAttr("class");
             let mq;
-            for (let in = wq; in--; ) {
-              mq = rh[in];
+            for (let ix = wq; ix--; ) {
+              mq = rh[ix];
               if ($(mq).attr("value") === this[jt]) {
                 $(mq).attr("class", "active");
                 break;
