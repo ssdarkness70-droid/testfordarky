@@ -5127,6 +5127,9 @@
           },
         });
         this.widgetIds[alq] = aai;
+        if (3 === alq) {
+          window.turnstile.execute(aai);
+        }
       });
     }
     static ["connect"](hy, aff) {
