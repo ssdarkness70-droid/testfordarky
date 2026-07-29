@@ -1529,8 +1529,11 @@
     }
     static ["kill"]() {
       const killed = Player.typeID;
-      if (!WsConnection.connected3 && !WsConnection.ws3) {
-        return Notifications.alert("Drag+", "KILL: backup tab 3 not ready");
+      if (1 === killed || 3 === killed) {
+        return Notifications.alert("Drag+", "KILL: only Tab 2 can be killed");
+      }
+      if (!Player._isAlive3 || (!WsConnection.connected3 && !WsConnection.ws3)) {
+        return Notifications.alert("Drag+", "KILL: backup tab 3 not ready or not spawned");
       }
       const killedWs = killed === 1 ? WsConnection.ws : WsConnection.ws2;
       CellData.promoteTab(3, killed);
@@ -3819,8 +3822,6 @@
         if (this._isAlive2) {
           this.type = 2;
           PacketSender.spectate(1);
-        } else if (this._isAlive3 && WsConnection.ws3) {
-          this.promoteTabFromBackup(1);
         } else {
           RelaySender.aliveStatus();
           this.setInfo();
