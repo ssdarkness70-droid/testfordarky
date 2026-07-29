@@ -1532,11 +1532,18 @@
       if (!WsConnection.connected3 && !WsConnection.ws3) {
         return Notifications.alert("Drag+", "KILL: backup tab 3 not ready");
       }
-      WsConnection.closeTab(killed);
+      const killedWs = killed === 1 ? WsConnection.ws : WsConnection.ws2;
       CellData.promoteTab(3, killed);
       Player.promoteTab(3, killed);
       WorldData.promoteTab(3, killed);
       WsConnection.promoteTab(3, killed);
+      if (killedWs && killedWs.close) {
+        killedWs.onopen = null;
+        killedWs.onmessage = null;
+        killedWs.onclose = null;
+        killedWs.onerror = null;
+        killedWs.close();
+      }
       Player.typeID = killed;
       Notifications.alert("Drag+", "KILL: Tab " + killed + " replaced with backup");
       WsConnection.connectTab(3);
