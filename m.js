@@ -6775,7 +6775,7 @@
         let gk = Renderer.code2Url(Renderer.getImgurCode(aeq.skin || "")).includes("XXXXXXX") ? aeq.skin : aeq.arbSkin;
         const dk = wx && jy && this.getCustomSkin(aeq.worldID);
         const akw =
-          if && !dk && gk && this.knownSkins.hasOwnProperty(gk.replace(/free\/|.png/, "")) && this.get3rbSkin(gk);
+          arb && !dk && gk && this.knownSkins.hasOwnProperty(gk.replace(/free\/|.png/, "")) && this.get3rbSkin(gk);
         if (dk) {
           amh.drawImage(
             dk,
