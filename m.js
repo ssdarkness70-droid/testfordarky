@@ -1528,28 +1528,23 @@
       }, 100);
     }
     static ["kill"]() {
-      const killed = Player.typeID;
-      if (1 === killed || 3 === killed) {
+      const tab = Player.typeID;
+      if (1 === tab || 3 === tab) {
         return Notifications.alert("Drag+", "KILL: only Tab 2 can be killed");
       }
-      if (!Player._isAlive3 || (!WsConnection.connected3 && !WsConnection.ws3)) {
-        return Notifications.alert("Drag+", "KILL: backup tab 3 not ready or not spawned");
+      const alive = tab === 2 ? Player._isAlive2 : Player._isAlive;
+      if (!alive) {
+        return Notifications.warn("Drag+", "KILL: Tab " + tab + " is not alive");
       }
-      const killedWs = killed === 1 ? WsConnection.ws : WsConnection.ws2;
-      CellData.promoteTab(3, killed);
-      Player.promoteTab(3, killed);
-      WorldData.promoteTab(3, killed);
-      WsConnection.promoteTab(3, killed);
-      if (killedWs && killedWs.close) {
-        killedWs.onopen = null;
-        killedWs.onmessage = null;
-        killedWs.onclose = null;
-        killedWs.onerror = null;
-        killedWs.close();
+      if (!WsConnection.backupReady || !WsConnection.ws3Open) {
+        return Notifications.alert("Drag+", "KILL: backup tab 3 not ready");
       }
-      Player.typeID = killed;
-      Notifications.alert("Drag+", "KILL: Tab " + killed + " replaced with backup");
-      WsConnection.connectTab(3);
+      if (WsConnection.recycleLocks.has(tab)) return false;
+      WsConnection.recycleLocks.add(tab);
+      const promoted = WsConnection.promoteBackup(tab, "manual K kill");
+      Notifications.alert("Drag+", "KILL: Tab " + tab + " replaced with backup");
+      setTimeout(() => WsConnection.recycleLocks.delete(tab), 1800);
+      return promoted;
     }
     static ["multiboxTab"]() {
       if (1 === Player.typeID) {
@@ -3819,6 +3814,7 @@
     static ["dead"]() {
       if (this._isAlive) {
         this._isAlive = false;
+        WsConnection.queuePromotion(1, "Tab 1 died");
         if (this._isAlive2) {
           this.type = 2;
           PacketSender.spectate(1);
@@ -3831,25 +3827,15 @@
     static ["dead2"]() {
       if (this._isAlive2) {
         this._isAlive2 = false;
+        WsConnection.queuePromotion(2, "Tab 2 died");
         if (this._isAlive) {
           this.type = 1;
           PacketSender.spectate(2);
-        } else if (this._isAlive3 && WsConnection.ws3) {
-          this.promoteTabFromBackup(2);
         } else {
           RelaySender.aliveStatus();
           this.setInfo();
         }
       }
-    }
-    static ["promoteTabFromBackup"](killed) {
-      CellData.promoteTab(3, killed);
-      Player.promoteTab(3, killed);
-      WorldData.promoteTab(3, killed);
-      WsConnection.promoteTab(3, killed);
-      this.type = killed;
-      Notifications.alert("Drag+", "Backup Tab 3 promoted to Tab " + killed);
-      WsConnection.connectTab(3);
     }
     static ["dead3"]() {
       // Tab 3 is backup-only — auto-respawn silently
@@ -5079,6 +5065,16 @@
       this.widgetIds = {};
       this.pendingResolvers = {};
       this.restartAt = null;
+      this.backupReady = false;
+      this.backupConnecting = false;
+      this.backupPhase = "Waiting";
+      this.backupPhaseSince = 0;
+      this.promotionInFlight = 0;
+      this.pendingPromotions = new Set();
+      this.pendingRespawns = new Set();
+      this.recycleLocks = new Set();
+      this.backupRetryTimer = null;
+      this.intentionalDisconnect = false;
       WorldData.init();
     }
     // Each tab needs its OWN Turnstile widget/container. Rendering ".cf-turnstile"
@@ -5146,7 +5142,7 @@
         });
         this.widgetIds[alq] = aai;
         if (3 === alq) {
-          window.turnstile.execute(aai);
+          setTimeout(() => window.turnstile.execute(aai), 300);
         }
       });
     }
@@ -5157,6 +5153,7 @@
       if (hy) {
         this.disconnect();
         this.resetData();
+        this.intentionalDisconnect = false;
         this.ws = new WebSocket(hy, "algamees");
         this.ws.binaryType = "arraybuffer";
         this.ws.onopen = () => {
@@ -5189,6 +5186,8 @@
         };
       }
       if (hy) {
+        this.backupConnecting = true;
+        this.backupReady = false;
         this.ws3 = new WebSocket(hy, "algamees");
         this.ws3.binaryType = "arraybuffer";
         this.ws3.onopen = () => {
@@ -5208,6 +5207,8 @@
       }
     }
     static ["disconnect"]() {
+      this.intentionalDisconnect = true;
+      clearTimeout(this.backupRetryTimer);
       if (this.ws && this.ws.close) {
         this.ws.close();
         this.ws.onopen = null;
@@ -5235,6 +5236,12 @@
       this.connected2 = false;
       this.ws3 = null;
       this.connected3 = false;
+      this.backupReady = false;
+      this.backupConnecting = false;
+      this.pendingPromotions.clear();
+      this.pendingRespawns.clear();
+      this.promotionInFlight = 0;
+      this.recycleLocks.clear();
       this.ip = null;
     }
     static ["resetData"]() {
@@ -5257,6 +5264,12 @@
       // switch) would silently route every "Play" click to tab 2 only,
       // making tab 1 look completely unplayable.
       Player.type = 1;
+      this.backupReady = false;
+      this.backupConnecting = false;
+      this.pendingPromotions.clear();
+      this.pendingRespawns.clear();
+      this.promotionInFlight = 0;
+      this.recycleLocks.clear();
     }
     static ["send"](acr, yj) {
       this.packetCount.out++;
@@ -5274,6 +5287,7 @@
       PacketSender.init(nq);
       Notifications.alert("Drag+", "Tab " + nq + " connected");
       if (3 === nq) {
+        this.backupConnecting = false;
         setTimeout(() => PacketSender.spawn(3), 500);
       }
     }
@@ -5284,10 +5298,14 @@
     static ["onClose"](cq) {
       if (1 === cq) {
         this.connected = false;
+        if (!this.intentionalDisconnect && this.backupReady) this.queuePromotion(1, "Tab 1 disconnected");
       } else if (2 === cq) {
         this.connected2 = false;
+        if (!this.intentionalDisconnect && this.backupReady) this.queuePromotion(2, "Tab 2 disconnected");
       } else {
         this.connected3 = false;
+        this.backupReady = false;
+        if (!this.intentionalDisconnect) this.scheduleBackup(300);
       }
       PacketParser.clearCells(cq);
       Notifications.alert("Drag+", "Tab " + cq + " disconnected");
@@ -5318,6 +5336,13 @@
     static get ["ws3Open"]() {
       return this.ws3 && this.ws3.readyState === this.ws3.OPEN;
     }
+    static ["bindSocket"](ws, tab) {
+      ws.binaryType = "arraybuffer";
+      ws.onopen = () => this.onOpen(tab);
+      ws.onmessage = (e) => this.onMessage(e, tab);
+      ws.onclose = () => this.onClose(tab);
+      ws.onerror = () => this.onError(tab);
+    }
     // Close a single tab's WebSocket (leaves other tabs intact)
     static ["closeTab"](tab) {
       const ws = tab === 1 ? this.ws : tab === 2 ? this.ws2 : this.ws3;
@@ -5329,24 +5354,78 @@
       else { this.ws3 = null; this.connected3 = false; }
       PacketParser.clearCells(tab);
     }
-    // Move ws3 → killed tab slot, rewire handlers + ping to the new tab number
-    static ["promoteTab"](from, to) {
-      const srcWs = from === 1 ? this.ws : from === 2 ? this.ws2 : this.ws3;
-      const srcCon = from === 1 ? this.connected : from === 2 ? this.connected2 : this.connected3;
-      if (srcWs) {
-        srcWs.onmessage = (e) => this.onMessage(e, to);
-        srcWs.onclose = () => this.onClose(to);
-        srcWs.onerror = () => this.onError(to);
+    // Promote backup (ws3) into a dead tab slot. Returns true on success.
+    static ["promoteBackup"](tab, reason) {
+      tab = Number(tab);
+      if ((tab !== 1 && tab !== 2) || !this.backupReady || !this.ws3Open || this.promotionInFlight) return false;
+      const promoted = this.ws3;
+      const key = tab === 2 ? "ws2" : "ws";
+      const retired = this[key];
+      this.promotionInFlight = tab;
+      this.pendingPromotions.delete(tab);
+      this.pendingRespawns.delete(tab);
+      PacketSender.stopPingLoop(tab);
+      PacketSender.stopPingLoop(3);
+      if (retired && retired !== promoted) {
+        retired.onopen = retired.onmessage = retired.onclose = retired.onerror = null;
+        try { retired.close(1000, "Endymion active slot recycled"); } catch (e) {}
       }
-      if (to === 1) { this.ws = srcWs; this.connected = srcCon; }
-      else if (to === 2) { this.ws2 = srcWs; this.connected2 = srcCon; }
-      else { this.ws3 = srcWs; this.connected3 = srcCon; }
-      if (from === 1) { this.ws = null; this.connected = false; }
-      else if (from === 2) { this.ws2 = null; this.connected2 = false; }
-      else { this.ws3 = null; this.connected3 = false; }
-      // Move ping interval so the promoted tab keeps its heartbeat
-      PacketSender["pingInterval" + to] = PacketSender["pingInterval" + from];
-      PacketSender["pingInterval" + from] = null;
+      promoted.onopen = promoted.onmessage = promoted.onclose = promoted.onerror = null;
+      this[key] = promoted;
+      if (tab === 1) this.connected = true; else this.connected2 = true;
+      this.ws3 = null;
+      this.connected3 = false;
+      this.backupReady = false;
+      this.backupConnecting = false;
+      PacketParser.clearCells(tab);
+      if (tab === 1) Player._isAlive = false; else Player._isAlive2 = false;
+      this.bindSocket(promoted, tab);
+      PacketSender.initPingLoop(tab);
+      Player.type = tab;
+      const spawnFn = () => PacketSender.spawn(tab);
+      setTimeout(spawnFn, 100);
+      setTimeout(() => {
+        const alive = tab === 2 ? Player._isAlive2 : Player._isAlive;
+        if (!alive) spawnFn();
+      }, 650);
+      this.scheduleBackup(900);
+      setTimeout(() => {
+        if (this.promotionInFlight === tab) this.promotionInFlight = 0;
+        this.pumpPromotionQueue();
+      }, 1500);
+      return true;
+    }
+    static ["queuePromotion"](tab, reason) {
+      tab = Number(tab);
+      if (tab !== 1 && tab !== 2) return false;
+      this.pendingPromotions.add(tab);
+      setTimeout(() => this.pumpPromotionQueue(), 180);
+      return true;
+    }
+    static ["pumpPromotionQueue"]() {
+      if (this.promotionInFlight) return false;
+      for (const tab of [...this.pendingPromotions]) {
+        const alive = tab === 2 ? Player._isAlive2 : Player._isAlive;
+        if (alive) {
+          this.pendingPromotions.delete(tab);
+          continue;
+        }
+        if (!this.backupReady || !this.ws3Open) {
+          this.scheduleBackup(0);
+          return false;
+        }
+        return this.promoteBackup(tab, "Tab " + tab + " died");
+      }
+      return false;
+    }
+    static ["scheduleBackup"](delay = 1500) {
+      clearTimeout(this.backupRetryTimer);
+      if (this.intentionalDisconnect || !this.ip || !this.connected || !this.connected2 || this.ws3Open || this.backupConnecting) return;
+      this.backupRetryTimer = setTimeout(() => {
+        this.backupConnecting = true;
+        this.backupReady = false;
+        this.connectTab(3);
+      }, delay);
     }
     // Reconnect a tab (used for tab 3 after promotion)
     static ["connectTab"](tab) {
@@ -5754,6 +5833,8 @@
         WsConnection.connected2 = true;
       } else {
         WsConnection.connected3 = true;
+        WsConnection.backupReady = true;
+        WsConnection.backupConnecting = false;
       }
     }
     static ["handleDisabledProperty"](du) {
