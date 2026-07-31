@@ -6737,6 +6737,26 @@
       for (const agl of RelayData.teamPlayers.values())
         if (agl.isAlive && !agl.skin.includes("XXXXXXX")) {
           this.skinMap.set(agl.worldID, this.code2Url(agl.skin));
+          // Team skin on both tabs: the relay carries one skin per teammate,
+          // but a multibox teammate's second tab runs under the same nick
+          // with a different in-game color, so its worldID (nick + colorHex
+          // in party mode) never matches the mapping above and its cells
+          // rendered without the skin. Sweep the live cells by nick once
+          // and give every cell of his that still has no skin the same one.
+          // Only reached when an alive teammate actually has a skin, so the
+          // solo/common path costs nothing extra.
+          for (const am of [CellData.cells, CellData.cells2])
+            for (const ac of am.values())
+              if (
+                !ac.isMine &&
+                !ac.isVirus &&
+                !ac.isEjected &&
+                ac.nick &&
+                ac.nick === agl.nick &&
+                !this.skinMap.has(ac.worldID)
+              ) {
+                this.skinMap.set(ac.worldID, this.code2Url(agl.skin));
+              }
         }
     }
     static ["createRGBset"]() {
