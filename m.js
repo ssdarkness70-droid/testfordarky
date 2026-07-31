@@ -2501,7 +2501,9 @@
         ajp.remove();
       });
       this.chatroomdiv.append(ajp);
-      this.chatroomdiv.scrollTop(this.chatroomdiv[0].scrollHeight);
+      if (1 === ChatInput.currentMode) {
+        this.chatroomdiv.scrollTop(this.chatroomdiv[0].scrollHeight);
+      }
     }
     static ["append"](jf) {
       const td = $(jf);
@@ -2541,7 +2543,18 @@
           "</span></div>",
       );
       this.chatroomdiv.append(aap);
-      this.chatroomdiv.scrollTop(this.chatroomdiv[0].scrollHeight);
+      // Only auto-scroll the mode being viewed - a private message must not
+      // yank the game chat's scroll position (and vice versa). Unread
+      // private messages light up the Private Chat button in red instead.
+      if ("private" === xo) {
+        if (2 !== ChatInput.currentMode) {
+          $("#chat-mode-switch .chat-mode-btn[data-mode='2']").addClass("unread");
+        } else {
+          this.chatroomdiv.scrollTop(this.chatroomdiv[0].scrollHeight);
+        }
+      } else if (1 === ChatInput.currentMode) {
+        this.chatroomdiv.scrollTop(this.chatroomdiv[0].scrollHeight);
+      }
       return aap;
     }
   }
@@ -2900,6 +2913,8 @@
       this.isOpened = false;
       this.isFocused = false;
       this.modeButtons = $("#chat-mode-switch .chat-mode-btn");
+      this.currentMode = 1;
+      this.modeScrolls = { 1: 0, 2: 0 };
       this.input.blur(() => {
         this.isFocused = false;
       });
@@ -2940,6 +2955,13 @@
       this.updateModeUI(1);
     }
     static ["updateModeUI"](tg) {
+      // Remember each mode's own scroll position so game/private chat
+      // scrolling stays fully independent - switching modes restores the
+      // other mode's position instead of sharing one joint scrollbar.
+      if (this.chatroom && this.currentMode) {
+        this.modeScrolls[this.currentMode] = this.chatroom[0].scrollTop;
+      }
+      this.currentMode = tg;
       this.modeButtons.each((ml, afy) => {
         const dz = $(afy);
         dz.toggleClass("active", +dz.attr("data-mode") === +tg);
@@ -2951,6 +2973,10 @@
       // visible in both, see the CSS rules for #chatroom.chat-view-*).
       this.chatroom.toggleClass("chat-view-game", 1 == tg);
       this.chatroom.toggleClass("chat-view-private", 2 == tg);
+      if (2 === tg) {
+        this.modeButtons.filter('[data-mode="2"]').removeClass("unread");
+      }
+      this.chatroom.scrollTop(this.modeScrolls[tg] || 0);
     }
     static ["open"](ls) {
       this.container.show();
