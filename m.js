@@ -389,6 +389,7 @@
       this.splitRings = Storage.get("settings", "splitRings") || "off";
       this.virusRange = Storage.get("settings", "virusRange") || "off";
       this.multiboxRing = Storage.get("settings", "multiboxRing") || "on";
+      this.multiboxCellColor = Storage.get("settings", "multiboxCellColor") || "off";
       this.commander = Storage.get("settings", "commander") || "on";
       this.targeting = Storage.get("settings", "targeting") || "off";
       this.chatType = Storage.get("settings", "chatType") || "popup";
@@ -1515,6 +1516,10 @@
     static ["togglemultiboxRing"]() {
       const nx = Storage.get("settings", "multiboxRing");
       Settings.multiboxRing = "off" === Settings.multiboxRing ? ("off" !== nx && nx) || "on" : "off";
+    }
+    static ["toggleMultiboxCellColor"]() {
+      const mx = Storage.get("settings", "multiboxCellColor");
+      Settings.multiboxCellColor = "off" === Settings.multiboxCellColor ? ("off" !== mx && mx) || "on" : "off";
     }
     static ["respawn"]() {
       const ie = setInterval(() => {
@@ -6549,6 +6554,7 @@
       const arb = Settings.arbSkins === "on";
       const aal = Settings.teamIndicator === "on";
       const nl = Settings.multiboxRing === "on";
+      const mc = Settings.multiboxCellColor === "on";
       const en = Theme.indicatorSize;
       const afc = Theme.cellTransparency / 100;
       const b = Theme.cellNickSize / 100;
@@ -6596,7 +6602,8 @@
           amh.fillStyle = ti;
           amh.fill();
         } else {
-          amh.fillStyle = RgbCycle.getColor(aeq.colorObject, no);
+          amh.fillStyle =
+            mc && aeq.isMine ? (aeq.cellType === Player.typeID ? ph : bm) : RgbCycle.getColor(aeq.colorObject, no);
           if (afc * gu < 1) {
             amh.globalAlpha = afc * gu;
             amh.fill();
