@@ -5090,7 +5090,7 @@
       if (hy) {
         this.disconnect();
         this.resetData();
-        this.ws = new WebSocket(hy, "algamees");
+        this.ws = new WebSocket(hy, "ghmarab");
         this.ws.binaryType = "arraybuffer";
         this.ws.onopen = () => {
           this.onOpen(1);
@@ -5106,7 +5106,7 @@
         };
       }
       if (hy) {
-        this.ws2 = new WebSocket(hy, "algamees");
+        this.ws2 = new WebSocket(hy, "ghmarab");
         this.ws2.binaryType = "arraybuffer";
         this.ws2.onopen = () => {
           this.onOpen(2);
