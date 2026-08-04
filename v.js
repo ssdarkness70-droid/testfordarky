@@ -1,5 +1,5 @@
 // Deobfuscated - protection header removed
-window.kanm1i = "algamees";
+window.kanm1i = "ghmarab";
 (!(function (e, t) {
   "use strict";
   "object" == typeof module && "object" == typeof module.exports
