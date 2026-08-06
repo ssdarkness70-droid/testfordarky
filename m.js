@@ -3765,6 +3765,9 @@
           this.colorHex2 = zy.colorHex;
           break;
         }
+        // Tab 2 respawned with a new color: re-broadcast the skin payload so
+        // teammates can key tab 2's cells (they carry colorHex2) correctly.
+        RelaySender.skin();
       }
     }
     static ["updateData"]() {
@@ -3964,6 +3967,7 @@
       this.nick = "";
       this.skin = "";
       this.skin2 = "";
+      this.skin2Color = "";
       this.colorHex = "#000";
       this.isRGB = false;
       this.animX = 90;
@@ -6176,6 +6180,8 @@
           const aey = ri.readUTF8string().split("|");
           afb.skin = aey[0] || "";
           afb.skin2 = aey[1] || "";
+          afb.skin2Color = /^[0-9a-fA-F]{6}$/.test(aey[2] || "") ? "#" + aey[2].toLowerCase() : "";
+          console.log("[RT-RECV] update skin =", JSON.stringify(afb.skin), "skin2 =", JSON.stringify(afb.skin2), "skin2Color =", JSON.stringify(afb.skin2Color));
         }
         if (16 & abw) {
           afb.x = ri.readInt16();
@@ -6216,6 +6222,8 @@
         const aek = vy.readUTF8string().split("|");
         ami.skin = aek[0] || "";
         ami.skin2 = aek[1] || "";
+        ami.skin2Color = /^[0-9a-fA-F]{6}$/.test(aek[2] || "") ? "#" + aek[2].toLowerCase() : "";
+        console.log("[RT-RECV] prePlayers skin =", JSON.stringify(ami.skin), "skin2 =", JSON.stringify(ami.skin2), "skin2Color =", JSON.stringify(ami.skin2Color));
         ami.x = vy.readInt16();
         ami.y = vy.readInt16();
         ami.mass = vy.readUInt32();
@@ -6301,10 +6309,24 @@
     }
     static ["skin"]() {
       if (RelayWs.connected) {
-        // Tab-2 skin rides along as "SKIN1|SKIN2" in the same opcode-4 field,
-        // so old clients (and the relay server) still see a plain skin code
-        // when only skin 1 is set. The parser splits on "|" on the far side.
-        const ahc = Player.skin2 ? Player.skin + "|" + Player.skin2 : Player.skin;
+        // Tab-2 skin and its player color ride along as "SKIN1|SKIN2|RRGGBB"
+        // in the same opcode-4 field. The color is the discriminator the far
+        // side needs: every cell of a player carries that player's color on
+        // ANY socket, so each of our tabs maps to exactly one skin key - the
+        // old worldID+cellType keying failed because a multibox teammate's
+        // cells arrive on both of the friend's sockets (cellType 1 AND 2
+        // copies), so both tabs' cells got both skins and the overlap picked
+        // one at random. Colors are server-assigned per spawn and stay fixed
+        // for the player's whole life, so the key is stable.
+        const parts = [Player.skin];
+        if (Player.skin2) {
+          parts.push(Player.skin2);
+          if (/^#[0-9a-fA-F]{6}$/.test(Player.colorHex2)) {
+            parts.push(Player.colorHex2.slice(1));
+          }
+        }
+        const ahc = parts.join("|");
+        console.log("[RT-SEND] skin =", JSON.stringify(ahc));
         let aeb = ahc.length;
         const bk = this.createView(2 + ahc.length);
         for (bk.setUint8(0, 4, true); aeb--; ) {
@@ -6641,7 +6663,7 @@
       amh.strokeStyle = Theme.virusBorderColor;
       amh.lineWidth = Theme.virusBorderWidth;
       for (const aeq of CellData.sortedCells) {
-        const wx = !aeq.isVirus && !aeq.isEjected && this.skinMap.has(aeq.worldID + ":" + aeq.cellType);
+        const wx = !aeq.isVirus && !aeq.isEjected && this.skinMap.has(this.skinKey(aeq.nick, aeq.colorHex));
         aeq.animate();
         let gu = 1;
         const alp = {
@@ -6699,7 +6721,7 @@
           );
         }
         let gk = Renderer.code2Url(Renderer.getImgurCode(aeq.skin || "")).includes("XXXXXXX") ? aeq.skin : aeq.arbSkin;
-        const dk = wx && jy && this.getCustomSkin(aeq.worldID + ":" + aeq.cellType);
+        const dk = wx && jy && this.getCustomSkin(this.skinKey(aeq.nick, aeq.colorHex));
         const akw =
           arb && !dk && gk && this.knownSkins.hasOwnProperty(gk.replace(/free\/|.png/, "")) && this.get3rbSkin(gk);
         if (dk) {
@@ -6775,50 +6797,45 @@
     static ["createSkinMap"]() {
       this.arbSkin = $("#arbSkin").val();
       this.skinMap.clear();
-      // Per-tab keys: worldID + ":" + cellType. Player.colorHex is always
-      // tab 1's color and colorHex2 tab 2's (both are set once at each
-      // tab's spawn edge, they do NOT follow the active tab), so worldID is
-      // tab 1's id and worldID2 tab 2's id - keying them by typeID would
-      // swap the two skins the moment the other tab becomes active, which
-      // makes both keys miss their cells and hides both skins.
+      // Keys are "base nick + player color" (see skinKey). Every cell of a
+      // player carries that player's color, whichever socket it arrived on,
+      // so each tab maps to exactly one key and renders one skin - unlike
+      // worldID+cellType keying, where a multibox teammate's cells arrive on
+      // both of the friend's sockets (cellType 1 AND 2 copies), so both
+      // tabs' cells received both skins and the overlapping copies drew one
+      // of them at random. Colors are server-assigned per spawn and stable
+      // for the player's whole life.
       const u1 = Player.skin.includes("XXXXXXX") ? "" : this.code2Url(Player.skin);
       const u2 = Player.skin2 ? this.code2Url(Player.skin2) : u1;
       const arb = this.arbSkin
         ? "./res/skins/free/" + this.arbSkin.replace(/free\/|.png/g, "") + ".png"
         : "";
+      const k1 = this.skinKey(Player.nick, Player.colorHex);
+      const k2 = this.skinKey(Player.nick, Player.colorHex2);
       if (u1) {
-        this.skinMap.set(Player.worldID + ":1", u1);
+        this.skinMap.set(k1, u1);
       } else if (arb) {
-        this.skinMap.set(Player.worldID + ":1", arb);
+        this.skinMap.set(k1, arb);
       }
       if (u2) {
-        this.skinMap.set(Player.worldID2 + ":2", u2);
+        this.skinMap.set(k2, u2);
       } else if (arb) {
-        this.skinMap.set(Player.worldID2 + ":2", arb);
+        this.skinMap.set(k2, arb);
       }
       for (const agl of RelayData.teamPlayers.values())
         if (agl.isAlive && !agl.skin.includes("XXXXXXX")) {
           const t1 = this.code2Url(agl.skin);
           const t2 = agl.skin2 && !agl.skin2.includes("XXXXXXX") ? this.code2Url(agl.skin2) : t1;
-          // Team skins per tab: the relay now carries one skin per tab,
-          // split on "|" in the parser. A multibox teammate's two tabs run
-          // under the same nick, so sweep the live cells by nick and give
-          // each of his cells the skin matching its own tab (cellType). Only
-          // reached when an alive teammate actually has a skin, so the
-          // solo/common path costs nothing extra.
-          for (const am of [CellData.cells, CellData.cells2])
-            for (const ac of am.values())
-              if (
-                !ac.isMine &&
-                !ac.isVirus &&
-                !ac.isEjected &&
-                ac.nick &&
-                ac.nick === agl.nick &&
-                !this.skinMap.has(ac.worldID + ":" + ac.cellType)
-              ) {
-                this.skinMap.set(ac.worldID + ":" + ac.cellType, 1 === ac.cellType ? t1 : t2);
-              }
+          this.skinMap.set(this.skinKey(agl.nick, agl.colorHex), t1);
+          if (agl.skin2Color) {
+            this.skinMap.set(this.skinKey(agl.nick, agl.skin2Color), t2);
+          }
         }
+    }
+    static ["skinKey"](nick, colorHex) {
+      let base = nick.substring(nick.indexOf("}") + 1);
+      base = base.replace("%*^", "");
+      return base + colorHex;
     }
     static ["createRGBset"]() {
       this.rgbTeammates.clear();
