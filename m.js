@@ -6775,27 +6775,26 @@
     static ["createSkinMap"]() {
       this.arbSkin = $("#arbSkin").val();
       this.skinMap.clear();
-      // Per-tab keys: worldID + ":" + cellType. The Player.worldID/worldID2
-      // getters follow the ACTIVE tab, so which getter names which tab flips
-      // when the user switches tabs (invisible while both tabs shared one
-      // skin) - resolve them by typeID so tab 1 always gets skin 1 and tab 2
-      // always gets skin 2.
+      // Per-tab keys: worldID + ":" + cellType. Player.colorHex is always
+      // tab 1's color and colorHex2 tab 2's (both are set once at each
+      // tab's spawn edge, they do NOT follow the active tab), so worldID is
+      // tab 1's id and worldID2 tab 2's id - keying them by typeID would
+      // swap the two skins the moment the other tab becomes active, which
+      // makes both keys miss their cells and hides both skins.
       const u1 = Player.skin.includes("XXXXXXX") ? "" : this.code2Url(Player.skin);
       const u2 = Player.skin2 ? this.code2Url(Player.skin2) : u1;
       const arb = this.arbSkin
         ? "./res/skins/free/" + this.arbSkin.replace(/free\/|.png/g, "") + ".png"
         : "";
-      const tab1 = 1 === Player.typeID ? Player.worldID : Player.worldID2;
-      const tab2 = 2 === Player.typeID ? Player.worldID : Player.worldID2;
       if (u1) {
-        this.skinMap.set(tab1 + ":1", u1);
+        this.skinMap.set(Player.worldID + ":1", u1);
       } else if (arb) {
-        this.skinMap.set(tab1 + ":1", arb);
+        this.skinMap.set(Player.worldID + ":1", arb);
       }
       if (u2) {
-        this.skinMap.set(tab2 + ":2", u2);
+        this.skinMap.set(Player.worldID2 + ":2", u2);
       } else if (arb) {
-        this.skinMap.set(tab2 + ":2", arb);
+        this.skinMap.set(Player.worldID2 + ":2", arb);
       }
       for (const agl of RelayData.teamPlayers.values())
         if (agl.isAlive && !agl.skin.includes("XXXXXXX")) {
