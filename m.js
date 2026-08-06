@@ -651,6 +651,7 @@
       const alt = {
         nick: "profile " + this.selected,
         skin: "https://i.imgur.com/nRqSis7.png",
+        skin2: "",
         arbSkin: "",
       };
       if (!abs) {
@@ -659,6 +660,7 @@
       Storage.set("profiles", "profile" + this.selected, abs);
       $("#nick").val(abs.nick);
       $("#skin").val(abs.skin);
+      $("#skin2").val(abs.skin2 || "");
       $("#tag").val(this.tag);
       $("#arbSkin").val(abs.arbSkin);
       this.updateMainSkin();
@@ -717,6 +719,20 @@
         }
         this.setSkin($("#skin").val());
       });
+      $("#skin2").blur(() => {
+        let aq = $("#skin2").val();
+        if (Renderer.code2Url(Renderer.getImgurCode(aq || "")).includes("XXXXXXX")) {
+          $("#skin2").val(Player.skin2 ? Renderer.code2Url(Player.skin2) : "");
+          return;
+        }
+        let ft = Storage.get("profiles", "profile" + this.selected);
+        if (!ft) {
+          ft = {};
+        }
+        ft.skin2 = Renderer.code2Url(Renderer.getImgurCode(aq));
+        Storage.set("profiles", "profile" + this.selected, ft);
+        Player.skin2 = aq;
+      });
     }
     static ["switch"](acx) {
       this.selected = ~~acx;
@@ -725,6 +741,7 @@
       const nw = {
         nick: "profile " + this.selected,
         skin: "https://i.imgur.com/nRqSis7.png",
+        skin2: "",
         arbSkin: "",
       };
       if (!ze) {
@@ -732,9 +749,11 @@
       }
       $("#nick").val(ze.nick);
       $("#skin").val(ze.skin);
+      $("#skin2").val(ze.skin2 || "");
       $("#arbSkin").val(ze.arbSkin);
       Player.nick = "" === ze.nick ? "Unnamed Cell" : ze.nick;
       Player.skin = ze.skin;
+      Player.skin2 = ze.skin2 || "";
       Storage.set("profiles", "profile" + this.selected, ze);
       this.updateMainSkin();
     }
@@ -747,6 +766,7 @@
       const o = {
         nick: "profile " + this.selected,
         skin: "https://i.imgur.com/nRqSis7.png",
+        skin2: "",
         arbSkin: "",
       };
       if (!ht) {
@@ -779,6 +799,7 @@
       const p = {
         nick: "profile " + this.selected,
         skin: "https://i.imgur.com/nRqSis7.png",
+        skin2: "",
         arbSkin: "",
       };
       if (!jg) {
@@ -3645,6 +3666,7 @@
       this._nick = $("#nick").val();
       this._arbSkin = $("#arbSkin").val();
       this._skin = Renderer.getImgurCode($("#skin").val());
+      this._skin2 = Renderer.getImgurCode($("#skin2").val());
       this._tag = $("#tag").val();
       this._colorObject = ail;
       this.colorHex = "#000";
@@ -3855,6 +3877,24 @@
     static get ["skin"]() {
       return this._skin;
     }
+    static set ["skin2"](dn) {
+      const acy = Renderer.getImgurCode(dn);
+      // Tab-2 skin: same code extraction as skin, no rainbow flag. An empty
+      // input silently clears it (so switching to a profile that has no
+      // second skin works); anything unparseable warns and keeps the old.
+      if ("XXXXXXX" === acy) {
+        if (dn) {
+          return void Notifications.alert("Drag+", Language.current.notif.invalidSkinUrl);
+        }
+        this._skin2 = "";
+      } else {
+        this._skin2 = acy;
+      }
+      RelaySender.skin();
+    }
+    static get ["skin2"]() {
+      return this._skin2 || "";
+    }
     static set ["tag"](ry) {
       this._tag = ry;
       RelaySender.tag();
@@ -3923,6 +3963,7 @@
       this.mass = 0;
       this.nick = "";
       this.skin = "";
+      this.skin2 = "";
       this.colorHex = "#000";
       this.isRGB = false;
       this.animX = 90;
@@ -6132,7 +6173,9 @@
           afb.colorHex = "#" + (16777216 + (aey << 16) + (abi << 8) + og).toString(16).slice(1);
         }
         if (4 & abw) {
-          afb.skin = ri.readUTF8string();
+          const aey = ri.readUTF8string().split("|");
+          afb.skin = aey[0] || "";
+          afb.skin2 = aey[1] || "";
         }
         if (16 & abw) {
           afb.x = ri.readInt16();
@@ -6170,7 +6213,9 @@
         const kz = vy.readUInt8();
         const jh = vy.readUInt8();
         ami.colorHex = "#" + (16777216 + (rk << 16) + (kz << 8) + jh).toString(16).slice(1);
-        ami.skin = vy.readUTF8string();
+        const aek = vy.readUTF8string().split("|");
+        ami.skin = aek[0] || "";
+        ami.skin2 = aek[1] || "";
         ami.x = vy.readInt16();
         ami.y = vy.readInt16();
         ami.mass = vy.readUInt32();
@@ -6256,7 +6301,10 @@
     }
     static ["skin"]() {
       if (RelayWs.connected) {
-        const ahc = Player.skin;
+        // Tab-2 skin rides along as "SKIN1|SKIN2" in the same opcode-4 field,
+        // so old clients (and the relay server) still see a plain skin code
+        // when only skin 1 is set. The parser splits on "|" on the far side.
+        const ahc = Player.skin2 ? Player.skin + "|" + Player.skin2 : Player.skin;
         let aeb = ahc.length;
         const bk = this.createView(2 + ahc.length);
         for (bk.setUint8(0, 4, true); aeb--; ) {
@@ -6593,7 +6641,7 @@
       amh.strokeStyle = Theme.virusBorderColor;
       amh.lineWidth = Theme.virusBorderWidth;
       for (const aeq of CellData.sortedCells) {
-        const wx = !aeq.isVirus && !aeq.isEjected && this.skinMap.has(aeq.worldID);
+        const wx = !aeq.isVirus && !aeq.isEjected && this.skinMap.has(aeq.worldID + ":" + aeq.cellType);
         aeq.animate();
         let gu = 1;
         const alp = {
@@ -6651,7 +6699,7 @@
           );
         }
         let gk = Renderer.code2Url(Renderer.getImgurCode(aeq.skin || "")).includes("XXXXXXX") ? aeq.skin : aeq.arbSkin;
-        const dk = wx && jy && this.getCustomSkin(aeq.worldID);
+        const dk = wx && jy && this.getCustomSkin(aeq.worldID + ":" + aeq.cellType);
         const akw =
           arb && !dk && gk && this.knownSkins.hasOwnProperty(gk.replace(/free\/|.png/, "")) && this.get3rbSkin(gk);
         if (dk) {
@@ -6727,23 +6775,37 @@
     static ["createSkinMap"]() {
       this.arbSkin = $("#arbSkin").val();
       this.skinMap.clear();
-      if (!Player.skin.includes("XXXXXXX")) {
-        this.skinMap.set(Player.worldID, this.code2Url(Player.skin));
-        this.skinMap.set(Player.worldID2, this.code2Url(Player.skin));
-      } else if (this.arbSkin) {
-        this.skinMap.set(Player.worldID, "./res/skins/free/" + this.arbSkin.replace(/free\/|.png/g, "") + ".png");
-        this.skinMap.set(Player.worldID2, "./res/skins/free/" + this.arbSkin.replace(/free\/|.png/g, "") + ".png");
+      // Per-tab keys: worldID + ":" + cellType. The Player.worldID/worldID2
+      // getters follow the ACTIVE tab, so which getter names which tab flips
+      // when the user switches tabs (invisible while both tabs shared one
+      // skin) - resolve them by typeID so tab 1 always gets skin 1 and tab 2
+      // always gets skin 2.
+      const u1 = Player.skin.includes("XXXXXXX") ? "" : this.code2Url(Player.skin);
+      const u2 = Player.skin2 ? this.code2Url(Player.skin2) : u1;
+      const arb = this.arbSkin
+        ? "./res/skins/free/" + this.arbSkin.replace(/free\/|.png/g, "") + ".png"
+        : "";
+      const tab1 = 1 === Player.typeID ? Player.worldID : Player.worldID2;
+      const tab2 = 2 === Player.typeID ? Player.worldID : Player.worldID2;
+      if (u1) {
+        this.skinMap.set(tab1 + ":1", u1);
+      } else if (arb) {
+        this.skinMap.set(tab1 + ":1", arb);
+      }
+      if (u2) {
+        this.skinMap.set(tab2 + ":2", u2);
+      } else if (arb) {
+        this.skinMap.set(tab2 + ":2", arb);
       }
       for (const agl of RelayData.teamPlayers.values())
         if (agl.isAlive && !agl.skin.includes("XXXXXXX")) {
-          this.skinMap.set(agl.worldID, this.code2Url(agl.skin));
-          // Team skin on both tabs: the relay carries one skin per teammate,
-          // but a multibox teammate's second tab runs under the same nick
-          // with a different in-game color, so its worldID (nick + colorHex
-          // in party mode) never matches the mapping above and its cells
-          // rendered without the skin. Sweep the live cells by nick once
-          // and give every cell of his that still has no skin the same one.
-          // Only reached when an alive teammate actually has a skin, so the
+          const t1 = this.code2Url(agl.skin);
+          const t2 = agl.skin2 && !agl.skin2.includes("XXXXXXX") ? this.code2Url(agl.skin2) : t1;
+          // Team skins per tab: the relay now carries one skin per tab,
+          // split on "|" in the parser. A multibox teammate's two tabs run
+          // under the same nick, so sweep the live cells by nick and give
+          // each of his cells the skin matching its own tab (cellType). Only
+          // reached when an alive teammate actually has a skin, so the
           // solo/common path costs nothing extra.
           for (const am of [CellData.cells, CellData.cells2])
             for (const ac of am.values())
@@ -6753,9 +6815,9 @@
                 !ac.isEjected &&
                 ac.nick &&
                 ac.nick === agl.nick &&
-                !this.skinMap.has(ac.worldID)
+                !this.skinMap.has(ac.worldID + ":" + ac.cellType)
               ) {
-                this.skinMap.set(ac.worldID, this.code2Url(agl.skin));
+                this.skinMap.set(ac.worldID + ":" + ac.cellType, 1 === ac.cellType ? t1 : t2);
               }
         }
     }
