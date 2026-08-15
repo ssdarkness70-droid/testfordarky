@@ -6102,6 +6102,15 @@
         }
         nv.setUint8(ng + 1, 0, true);
         this.sendPacket(nv, n);
+        // Re-sync identity with the relay on every spawn. RelaySender.init()
+        // (which fires on relay connect) can run before Player.init() has
+        // populated _nick from the #nick input - that race leaves the relay
+        // broadcasting an empty nick forever, even though this very spawn
+        // just used the real name (so the game server/leaderboard shows it
+        // while teammates see a blank roster entry + nameless minimap dot).
+        // nick()/skin() are no-ops when the relay isn't connected.
+        RelaySender.nick();
+        RelaySender.skin();
       }
     }
     static ["split"]() {
