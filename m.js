@@ -3869,7 +3869,6 @@
           RelaySender.aliveStatus();
           this.setInfo();
         }
-        WsConnection.queuePromotion(1, "Tab 1 died");
       }
     }
     static ["dead2"]() {
@@ -3882,7 +3881,6 @@
           RelaySender.aliveStatus();
           this.setInfo();
         }
-        WsConnection.queuePromotion(2, "Tab 2 died");
       }
     }
     static ["setInfo"]() {
@@ -5331,7 +5329,6 @@
         return true;
       }
       if (numericTab !== 1 && numericTab !== 2) return false;
-      const wasAlive = numericTab === 2 ? Boolean(Player._isAlive2) : Boolean(Player._isAlive);
       if (numericTab === 1) {
         this.ws = null;
         this.connected = false;
@@ -5342,28 +5339,13 @@
       PacketParser.clearCells(numericTab);
       Notifications.alert("Drag+", "Tab " + numericTab + " disconnected");
       console.log("Websocket " + numericTab + " closed");
-      // A disconnected playable tab is hot-replaced by Standby Tab 3 when it
-      // was alive (or queued for auto respawn once the transport reconnects).
-      if (wasAlive) {
-        this.pendingRespawns.add(numericTab);
-        if (this.promoteBackup(numericTab, "Tab " + numericTab + " disconnected")) {
-          this.connectionStatus();
-          return true;
-        }
-      } else {
-        this.pendingRespawns.delete(numericTab);
-        this.pendingPromotions.delete(numericTab);
-      }
-      const generation = Number(this.autoRespawnGeneration || 0);
+      // No auto respawn: the tab reconnects its transport but stays idle
+      // until the user presses Play. The standby is only promoted manually
+      // via K / /kill.
       setTimeout(() => {
         const key = numericTab === 1 ? "ws" : "ws2";
         if (this.intentionalDisconnect || !this.ip || this[key]) return;
-        // Reconnect the transport regardless; the protocol-init wrapper only
-        // spawns it if a still-valid pending marker exists.
         this.createSocket(numericTab);
-        if (generation !== Number(this.autoRespawnGeneration || 0)) {
-          this.pendingRespawns.delete(numericTab);
-        }
       }, 1000);
       if (!(this.wsOpen || this.ws2Open)) {
         MainMenu.open();
@@ -5975,25 +5957,6 @@
         WsConnection.connected = true;
       } else if (2 === adx) {
         WsConnection.connected2 = true;
-      }
-      // A tab that disconnected while alive and was NOT replaced by the
-      // standby (e.g. it was still connecting) is auto-respawned now that
-      // the transport is back up.
-      if ((adx === 1 || adx === 2) && WsConnection.pendingRespawns.has(adx)) {
-        const generation = Number(WsConnection.autoRespawnGeneration || 0);
-        setTimeout(() => {
-          if (generation !== Number(WsConnection.autoRespawnGeneration || 0)) {
-            WsConnection.pendingRespawns.delete(adx);
-            WsConnection.connectionStatus();
-            return;
-          }
-          const alive = adx === 2 ? Player._isAlive2 : Player._isAlive;
-          if (!alive && this.chekConnection(adx)) {
-            this.spawnTab(adx);
-          }
-          WsConnection.pendingRespawns.delete(adx);
-          WsConnection.connectionStatus();
-        }, 180);
       }
       if (WsConnection.connected && WsConnection.connected2) {
         this.handleDisabledProperty(false);
