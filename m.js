@@ -5855,7 +5855,7 @@
       // pointed at a self-signed cert, open that URL once directly in this
       // browser first and click through the "not secure" warning,
       // otherwise this will never connect.
-      this.url = "wss://157.180.84.143:8443";
+      this.url = "wss://drag-ex-relay.maamargasouma.workers.dev";
       // The relay is a single shared deployment - everyone who connects
       // without a room ends up seeing everyone else. Tab 1 + tab 2 share
       // one relay connection (see RelaySender), so a private per-browser room
@@ -6181,7 +6181,6 @@
           afb.skin = aey[0] || "";
           afb.skin2 = aey[1] || "";
           afb.skin2Color = /^[0-9a-fA-F]{6}$/.test(aey[2] || "") ? "#" + aey[2].toLowerCase() : "";
-          console.log("[RT-RECV] update skin =", JSON.stringify(afb.skin), "skin2 =", JSON.stringify(afb.skin2), "skin2Color =", JSON.stringify(afb.skin2Color));
         }
         if (16 & abw) {
           afb.x = ri.readInt16();
@@ -6223,7 +6222,6 @@
         ami.skin = aek[0] || "";
         ami.skin2 = aek[1] || "";
         ami.skin2Color = /^[0-9a-fA-F]{6}$/.test(aek[2] || "") ? "#" + aek[2].toLowerCase() : "";
-        console.log("[RT-RECV] prePlayers skin =", JSON.stringify(ami.skin), "skin2 =", JSON.stringify(ami.skin2), "skin2Color =", JSON.stringify(ami.skin2Color));
         ami.x = vy.readInt16();
         ami.y = vy.readInt16();
         ami.mass = vy.readUInt32();
@@ -6326,7 +6324,6 @@
           }
         }
         const ahc = parts.join("|");
-        console.log("[RT-SEND] skin =", JSON.stringify(ahc));
         let aeb = ahc.length;
         const bk = this.createView(2 + ahc.length);
         for (bk.setUint8(0, 4, true); aeb--; ) {
@@ -6423,7 +6420,6 @@
           gr.setUint8(zb + 6, ap.charCodeAt(zb), true);
         }
         gr.setUint8(6 + ap.length, 0, true);
-        Notifications.warn("RelayDebug", "chat SEND t=" + Date.now() + " room=" + RelayWs.room + " reqId=" + ake, "system");
         RelayWs.sendReliable(gr.buffer, ake);
       }
     }
