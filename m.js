@@ -198,6 +198,7 @@
     cameraSpeed: "Camera speed [2 default]",
     eatAnimation: "Cell eat [sucking] animation",
     autoZoom: "Auto zoom",
+    pairCamera: "Pair camera (close/far)",
     cellTextAnimation: "Cell text animation",
     autoHideText: "Auto hide text",
     hideOwnNick: "Hide own nick",
@@ -370,6 +371,7 @@
       this.zoomSpeed = ~~Storage.get("settings", "zoomSpeed") || 92;
       this.cameraSpeed = ~~Storage.get("settings", "cameraSpeed") || 20;
       this.autoZoom = Storage.get("settings", "autoZoom") || "off";
+      this.pairCamera = Storage.get("settings", "pairCamera") || "on";
       this.cellTextAnimation = Storage.get("settings", "cellTextAnimation") || "stepped";
       this.autoHideText = Storage.get("settings", "autoHideText") || "on";
       this.cellNick = Storage.get("settings", "cellNick") || "on";
@@ -1542,6 +1544,10 @@
       const mx = Storage.get("settings", "multiboxCellColor");
       Settings.multiboxCellColor = "off" === Settings.multiboxCellColor ? ("off" !== mx && mx) || "on" : "off";
     }
+    static ["togglePairCamera"]() {
+      const bg = Storage.get("settings", "pairCamera");
+      Settings.pairCamera = "off" === Settings.pairCamera ? ("off" !== bg && bg) || "on" : "off";
+    }
     static ["respawn"]() {
       const ie = setInterval(() => {
         if (WsConnection.connected) {
@@ -1550,7 +1556,9 @@
         }
       }, 100);
     }
-    static ["kill"]() {}
+    static ["kill"]() {
+      WsConnection.recycleActiveCell();
+    }
     static ["multiboxTab"]() {
       if (1 === Player.typeID) {
         Player.typeID = 2;
@@ -3686,6 +3694,7 @@
       this.movementPaused = false;
       this.deathLocation = aeu;
       this.type = 1;
+      this._pairCamera = false;
     }
     static ["update"]() {
       if (0 < this.pieceCount1) {
@@ -3774,46 +3783,78 @@
       if (this.isAlive) {
         let ahk = 0;
         let py = 0;
-        let hm = 0;
+        let pair1 = null;
+        let pair2 = null;
         this.mass = 0;
         this.biggestPieceMass = 0;
-        if (this._isAlive) {
-          for (const cp of CellData.myCells.values()) {
-            cp.animate();
-            ahk += cp.animX / this.pieceCount;
-            py += cp.animY / this.pieceCount;
-            hm += cp.animRadius;
-            this.mass += cp.staticMass;
-            if (this.biggestPieceMass < cp.staticMass) {
-              this.biggestPieceMass = cp.staticMass;
+        const mergedCount = this.pieceCount;
+        const pairCenter = (cells, origin) => {
+          let tx = 0;
+          let ty = 0;
+          let tw = 0;
+          let tr = 0;
+          for (const cell of cells.values()) {
+            cell.animate();
+            const weight = Math.max(1, cell.animRadius * cell.animRadius);
+            tx += (cell.animX - (origin ? origin.x : 0)) * weight;
+            ty += (cell.animY - (origin ? origin.y : 0)) * weight;
+            tw += weight;
+            tr += cell.animRadius;
+            ahk += (cell.animX - (origin ? origin.x : 0)) / mergedCount;
+            py += (cell.animY - (origin ? origin.y : 0)) / mergedCount;
+            this.mass += cell.staticMass;
+            if (this.biggestPieceMass < cell.staticMass) {
+              this.biggestPieceMass = cell.staticMass;
             }
           }
+          return tw ? { x: tx / tw, y: ty / tw, radii: tr } : null;
+        };
+        if (this._isAlive) {
+          pair1 = pairCenter(CellData.myCells, null);
         }
         if (this._isAlive2) {
           const yk = WorldData.position;
-          for (const mv of CellData.myCells2.values()) {
-            mv.animate();
-            ahk += (mv.animX - yk.x) / this.pieceCount;
-            py += (mv.animY - yk.y) / this.pieceCount;
-            hm += mv.animRadius;
-            this.mass += mv.staticMass;
-            if (this.biggestPieceMass < mv.staticMass) {
-              this.biggestPieceMass = mv.staticMass;
-            }
+          pair2 = pairCenter(CellData.myCells2, yk);
+        }
+        // Merged simple average of every cell - the original framing, kept as
+        // the fallback for single-tab play and for the Pair camera toggle OFF.
+        let targetX = ahk;
+        let targetY = py;
+        let targetR = (pair1 ? pair1.radii : 0) + (pair2 ? pair2.radii : 0);
+        if ("on" === Settings.pairCamera && pair1 && pair2) {
+          // Close/far camera mode uses hysteresis so two nearby controlled cells
+          // cannot make the camera rapidly flip between framing strategies.
+          const dist = Math.hypot(pair1.x - pair2.x, pair1.y - pair2.y);
+          this._pairCamera = this._pairCamera ? dist < 4500 : dist < 3000;
+          if (this._pairCamera) {
+            targetX = (pair1.x + pair2.x) / 2;
+            targetY = (pair1.y + pair2.y) / 2;
+            // Expanded close-cell envelope frames both cells as a stable
+            // pair without weighting by mass.
+            targetR = Math.max((pair1.radii + pair2.radii) * 1.15, dist * 0.1);
+          } else {
+            // When far apart, follow the selected tab instead of averaging
+            // empty space between the cells.
+            const followed = this.typeID === 2 ? pair2 : pair1;
+            targetX = followed.x;
+            targetY = followed.y;
+            targetR = followed.radii;
           }
+        } else {
+          this._pairCamera = false;
         }
         if (!this.movementPaused) {
-          const ajw = this.x - ahk;
-          const ds = this.y - py;
+          const ajw = this.x - targetX;
+          const ds = this.y - targetY;
           const acw = Math.sqrt(ajw * ajw + ds * ds);
           this.speed += acw;
-          this.x = ahk;
-          this.y = py;
+          this.x = targetX;
+          this.y = targetY;
         }
         if (this.score < this.mass) {
           this.score = this.mass;
         }
-        const ow = Math.pow(Math.min(64 / hm, 1), 0.4);
+        const ow = Math.pow(Math.min(64 / Math.max(targetR, 1), 1), 0.4);
         const zz = Math.max(window.innerWidth / 1080, window.innerHeight / 1920);
         Camera.autoZoomViewport = ow * zz;
       }
@@ -3828,6 +3869,7 @@
           RelaySender.aliveStatus();
           this.setInfo();
         }
+        WsConnection.queuePromotion(1, "Tab 1 died");
       }
     }
     static ["dead2"]() {
@@ -3840,6 +3882,7 @@
           RelaySender.aliveStatus();
           this.setInfo();
         }
+        WsConnection.queuePromotion(2, "Tab 2 died");
       }
     }
     static ["setInfo"]() {
@@ -5056,17 +5099,45 @@
       this.connected = false;
       this.ws2 = null;
       this.connected2 = false;
+      this.ws3 = null;
+      this.connected3 = false;
+      this.backupReady = false;
+      this.backupConnecting = false;
+      this.backupRetryTimer = null;
+      this.intentionalDisconnect = false;
+      this.captchaQueue = Promise.resolve();
       this.packetCount = yt;
       this.widgetIds = {};
       this.pendingResolvers = {};
       this.restartAt = null;
+      this.pendingRespawns = new Set();
+      this.pendingPromotions = new Set();
+      this.promotionInFlight = 0;
+      this.autoRespawnGeneration = 0;
+      this.recycleLocks = new Set();
+      this.backupPhase = "Waiting";
+      this.backupPhaseSince = Date.now();
+      this.registerKeyBindings();
+      this.startConnectionStatus();
+      window.DRAG_PLUS = {
+        backupStatus: () => this.statusSnapshot(),
+        kill: () => this.recycleActiveCell(),
+        promote: (tab) => this.promoteBackup(Number(tab), "console request"),
+      };
       WorldData.init();
     }
     // Each tab needs its OWN Turnstile widget/container. Rendering ".cf-turnstile"
     // twice targets the same single element, so the 2nd render() silently fails
     // to bind and tab 2's promise never resolves -> handshake2 never completes
     // -> ws2 never sends its auth packet -> server drops it as idle.
-    static async ["getToken"](alq) {
+    // The captcha queue serializes token requests so the standby tab never
+    // renders a third Turnstile widget while an earlier one is still pending.
+    static ["getToken"](alq) {
+      const task = this.captchaQueue.then(() => this._getToken(alq));
+      this.captchaQueue = task.catch(() => {});
+      return task;
+    }
+    static async ["_getToken"](alq) {
       return new Promise((lv, dq) => {
         if (alq <= 1) {
           Notifications.warn("Drag+", "Solving captcha, please wait..");
@@ -5135,61 +5206,67 @@
       if (hy) {
         this.disconnect();
         this.resetData();
-        this.ws = new WebSocket(hy, "ghmarab");
-        this.ws.binaryType = "arraybuffer";
-        this.ws.onopen = () => {
-          this.onOpen(1);
-        };
-        this.ws.onmessage = (pz) => {
-          this.onMessage(pz, 1);
-        };
-        this.ws.onclose = () => {
-          this.onClose(1);
-        };
-        this.ws.onerror = () => {
-          this.onError(1);
-        };
-      }
-      if (hy) {
-        this.ws2 = new WebSocket(hy, "ghmarab");
-        this.ws2.binaryType = "arraybuffer";
-        this.ws2.onopen = () => {
-          this.onOpen(2);
-        };
-        this.ws2.onmessage = (ado) => {
-          this.onMessage(ado, 2);
-        };
-        this.ws2.onclose = () => {
-          this.onClose(2);
-        };
-        this.ws2.onerror = () => {
-          this.onError(2);
-        };
-      }
-      if (hy) {
         this.ip = hy;
+        this.intentionalDisconnect = false;
+        this.createSocket(1);
+        this.createSocket(2);
         console.log("Connecting to: " + hy);
       }
     }
+    static ["createSocket"](slot) {
+      if (!this.ip) return null;
+      const socket = new WebSocket(this.ip, "ghmarab");
+      if (1 === slot) this.ws = socket;
+      else if (2 === slot) this.ws2 = socket;
+      else this.ws3 = socket;
+      this.bindSocket(socket, slot);
+      return socket;
+    }
+    static ["bindSocket"](socket, slot) {
+      socket.binaryType = "arraybuffer";
+      socket.onopen = () => this.onOpen(slot);
+      socket.onmessage = (ev) => this.onMessage(ev, slot);
+      socket.onclose = () => this.onClose(slot, socket);
+      socket.onerror = () => this.onError(slot);
+    }
+    // Standby Tab 3 opens only once both active tabs are authenticated, so
+    // the three Turnstile challenges never need to overlap.
+    static ["scheduleBackup"](delay = 1500) {
+      clearTimeout(this.backupRetryTimer);
+      if (this.intentionalDisconnect || !this.ip || !this.connected || !this.connected2 || this.ws3Open || this.backupConnecting) return;
+      this.backupRetryTimer = setTimeout(() => this.connectBackup(), delay);
+    }
+    static ["connectBackup"]() {
+      if (this.intentionalDisconnect || !this.ip || !this.connected || !this.connected2 || this.ws3Open || this.backupConnecting) return;
+      this.backupConnecting = true;
+      this.backupReady = false;
+      this.setBackupPhase("Connecting");
+      this.createSocket(3);
+      this.connectionStatus();
+    }
     static ["disconnect"]() {
-      if (this.ws && this.ws.close) {
-        this.ws.close();
-        this.ws.onopen = null;
-        this.ws.onmessage = null;
-        this.ws.onclose = null;
-        this.ws.onerror = null;
-      }
-      if (this.ws2 && this.ws2.close) {
-        this.ws2.close();
-        this.ws2.onopen = null;
-        this.ws2.onmessage = null;
-        this.ws2.onclose = null;
-        this.ws2.onerror = null;
-      }
+      this.intentionalDisconnect = true;
+      clearTimeout(this.backupRetryTimer);
+      [this.ws, this.ws2, this.ws3].forEach((socket) => {
+        if (!socket) return;
+        socket.onopen = socket.onmessage = socket.onclose = socket.onerror = null;
+        try {
+          socket.close();
+        } catch (e) {}
+      });
+      PacketSender.stopAllPingLoops();
       this.ws = null;
       this.connected = false;
       this.ws2 = null;
       this.connected2 = false;
+      this.ws3 = null;
+      this.connected3 = false;
+      this.backupReady = false;
+      this.backupConnecting = false;
+      this.pendingPromotions.clear();
+      this.pendingRespawns.clear();
+      this.promotionInFlight = 0;
+      this.setBackupPhase("Waiting");
       this.ip = null;
     }
     static ["resetData"]() {
@@ -5199,6 +5276,9 @@
       CellData.cells2.clear();
       CellData.myCellsIDs2.clear();
       CellData.myCells2.clear();
+      CellData.cells3.clear();
+      CellData.myCellsIDs3.clear();
+      CellData.myCells3.clear();
       Player._isAlive = false;
       Player._isAlive2 = false;
       // dead()/dead2() leave `type` pointed at whichever tab was still
@@ -5215,38 +5295,95 @@
         this.ws.send(acr);
       } else if (2 === yj && this.ws2Open) {
         this.ws2.send(acr);
+      } else if (3 === yj && this.ws3Open) {
+        this.ws3.send(acr);
       }
     }
     static ["onOpen"](nq) {
       RelaySender.ip();
-      SpamDetect.init();
+      if (1 === nq) SpamDetect.init();
       PacketSender.init(nq);
-      Notifications.alert("Drag+", "Tab " + nq + " connected");
+      if (3 !== nq) Notifications.alert("Drag+", "Tab " + nq + " connected");
     }
     static ["onMessage"](alh, adu) {
       this.packetCount["in"]++;
+      // Tab 3 is a transport-only hot standby. Its handshake is completed in
+      // onOpen(), but it must not feed world packets into the two-tab parser:
+      // that parser intentionally treats every non-Tab-1 packet as Tab 2.
+      // Letting standby traffic through would overwrite Tab 2's rendered state.
+      if (3 === adu) return;
       PacketParser.getBuffer(alh, adu);
     }
-    static ["onClose"](cq) {
-      if (1 === cq) {
+    static ["onClose"](cq, socket) {
+      const numericTab = Number(cq);
+      const current = numericTab === 1 ? this.ws : numericTab === 2 ? this.ws2 : this.ws3;
+      if (current !== socket) return false;
+      PacketSender.stopPingLoop(numericTab);
+      if (this.intentionalDisconnect) return false;
+      if (numericTab === 3) {
+        this.ws3 = null;
+        this.connected3 = false;
+        this.backupReady = false;
+        this.backupConnecting = false;
+        this.setBackupPhase("Retrying");
+        this.scheduleBackup(1800);
+        this.connectionStatus();
+        return true;
+      }
+      if (numericTab !== 1 && numericTab !== 2) return false;
+      const wasAlive = numericTab === 2 ? Boolean(Player._isAlive2) : Boolean(Player._isAlive);
+      if (numericTab === 1) {
+        this.ws = null;
         this.connected = false;
-      } else if (2 === cq) {
+      } else {
+        this.ws2 = null;
         this.connected2 = false;
       }
-      PacketParser.clearCells(cq);
-      Notifications.alert("Drag+", "Tab " + cq + " disconnected");
-      console.log("Websocket " + cq + " closed");
+      PacketParser.clearCells(numericTab);
+      Notifications.alert("Drag+", "Tab " + numericTab + " disconnected");
+      console.log("Websocket " + numericTab + " closed");
+      // A disconnected playable tab is hot-replaced by Standby Tab 3 when it
+      // was alive (or queued for auto respawn once the transport reconnects).
+      if (wasAlive) {
+        this.pendingRespawns.add(numericTab);
+        if (this.promoteBackup(numericTab, "Tab " + numericTab + " disconnected")) {
+          this.connectionStatus();
+          return true;
+        }
+      } else {
+        this.pendingRespawns.delete(numericTab);
+        this.pendingPromotions.delete(numericTab);
+      }
+      const generation = Number(this.autoRespawnGeneration || 0);
+      setTimeout(() => {
+        const key = numericTab === 1 ? "ws" : "ws2";
+        if (this.intentionalDisconnect || !this.ip || this[key]) return;
+        // Reconnect the transport regardless; the protocol-init wrapper only
+        // spawns it if a still-valid pending marker exists.
+        this.createSocket(numericTab);
+        if (generation !== Number(this.autoRespawnGeneration || 0)) {
+          this.pendingRespawns.delete(numericTab);
+        }
+      }, 1000);
       if (!(this.wsOpen || this.ws2Open)) {
         MainMenu.open();
       }
+      this.connectionStatus();
+      return true;
     }
     static ["onError"](alo) {
       if (!(this.wsOpen || this.ws2Open)) {
         MainMenu.open();
       }
-      if (1 === alo) {
+      if (3 === alo) {
+        this.connected3 = false;
+        this.backupReady = false;
+        this.backupConnecting = false;
+        this.setBackupPhase("Retrying");
+        this.scheduleBackup(1800);
+      } else if (1 === alo) {
         this.connected = false;
-      } else if (2 === alo) {
+      } else {
         this.connected2 = false;
       }
       console.log("Websocket " + alo + " errored out!");
@@ -5257,15 +5394,181 @@
     static get ["ws2Open"]() {
       return this.ws2 && this.ws2.readyState === this.ws2.OPEN;
     }
+    static get ["ws3Open"]() {
+      return this.ws3 && this.ws3.readyState === this.ws3.OPEN;
+    }
     // Close a single tab's WebSocket (leaves other tabs intact)
     static ["closeTab"](tab) {
-      const ws = tab === 1 ? this.ws : this.ws2;
+      const ws = tab === 1 ? this.ws : tab === 2 ? this.ws2 : this.ws3;
       if (ws && ws.close) {
         ws.close();
       }
       if (tab === 1) { this.ws = null; this.connected = false; }
       else if (tab === 2) { this.ws2 = null; this.connected2 = false; }
+      else { this.ws3 = null; this.connected3 = false; this.backupReady = false; }
       PacketParser.clearCells(tab);
+    }
+    // ------------------------------------------------------------------
+    // Standby Tab 3 promotion (always on): a hot standby tab is
+    // authenticated and kept in the background. K or /kill manually
+    // promotes it; a death or disconnect automatically promotes it.
+    // ------------------------------------------------------------------
+    static ["setBackupPhase"](phase) {
+      this.backupPhase = String(phase || "Waiting");
+      this.backupPhaseSince = Date.now();
+      this.connectionStatus();
+    }
+    static ["promoteBackup"](tab, reason = "Standby promotion") {
+      tab = Number(tab);
+      if ((tab !== 1 && tab !== 2) || !this.backupReady || !this.ws3Open || this.promotionInFlight) return false;
+      const promoted = this.ws3;
+      const key = tab === 2 ? "ws2" : "ws";
+      const retired = this[key];
+      this.promotionInFlight = tab;
+      this.pendingPromotions.delete(tab);
+      this.pendingRespawns.delete(tab);
+      PacketSender.stopPingLoop(tab);
+      PacketSender.stopPingLoop(3);
+      if (retired && retired !== promoted) {
+        retired.onopen = retired.onmessage = retired.onclose = retired.onerror = null;
+        try {
+          retired.close(1000, "Drag+ active slot recycled");
+        } catch (e) {}
+      }
+      promoted.onopen = promoted.onmessage = promoted.onclose = promoted.onerror = null;
+      this[key] = promoted;
+      if (tab === 1) this.connected = true; else this.connected2 = true;
+      this.ws3 = null;
+      this.connected3 = false;
+      this.backupReady = false;
+      this.backupConnecting = false;
+      this.setBackupPhase("Replacing");
+      PacketParser.clearCells(tab);
+      if (tab === 1) Player._isAlive = false; else Player._isAlive2 = false;
+      this.bindSocket(promoted, tab);
+      PacketSender.initPingLoop(tab);
+      Player.typeID = tab;
+      Notifications.alert("Drag+", "Standby Tab 3 promoted into Tab " + tab + ": " + reason);
+      const spawn = () => PacketSender.spawnTab(tab);
+      setTimeout(spawn, 100);
+      setTimeout(() => {
+        const alive = tab === 2 ? Player._isAlive2 : Player._isAlive;
+        if (!alive) spawn();
+      }, 650);
+      this.scheduleBackup(900);
+      setTimeout(() => {
+        if (this.promotionInFlight === tab) this.promotionInFlight = 0;
+        this.pumpPromotionQueue();
+        this.connectionStatus();
+      }, 1500);
+      this.connectionStatus();
+      return true;
+    }
+    static ["queuePromotion"](tab, reason = "Playable tab died") {
+      tab = Number(tab);
+      if ((tab !== 1 && tab !== 2) || !this.ip) return false;
+      this.pendingPromotions.add(tab);
+      this.lastPromotionReason = reason;
+      setTimeout(() => this.pumpPromotionQueue(), 180);
+      this.connectionStatus();
+      return true;
+    }
+    static ["pumpPromotionQueue"]() {
+      if (this.promotionInFlight) return false;
+      for (const tab of [...this.pendingPromotions]) {
+        const alive = tab === 2 ? Player._isAlive2 : Player._isAlive;
+        if (alive) {
+          this.pendingPromotions.delete(tab);
+          continue;
+        }
+        if (!this.backupReady || !this.ws3Open) {
+          this.scheduleBackup(0);
+          return false;
+        }
+        return this.promoteBackup(tab, this.lastPromotionReason || "Playable tab died");
+      }
+      return false;
+    }
+    static ["recycleActiveCell"]() {
+      const tab = Number(Player.typeID || 1);
+      const alive = tab === 2 ? Player._isAlive2 : Player._isAlive;
+      if (!alive) {
+        Notifications.warn("Drag+", "Tab " + tab + " is not alive.");
+        return false;
+      }
+      if (!this.backupReady || !this.ws3Open) {
+        Notifications.warn("Drag+", "Standby Tab 3 is not ready yet; kill/recycle was not performed.");
+        return false;
+      }
+      if (this.recycleLocks.has(tab)) return false;
+      this.recycleLocks.add(tab);
+      const promoted = this.promoteBackup(tab, "manual K /kill recycle");
+      setTimeout(() => this.recycleLocks.delete(tab), 1800);
+      return promoted;
+    }
+    static ["statusSnapshot"]() {
+      const tabStatus = (socket, connected, alive, pending) => {
+        if (alive) return "Alive";
+        if (!socket) return this.ip ? "Reconnecting" : "Offline";
+        if (socket.readyState === WebSocket.CONNECTING) return "Connecting";
+        if (socket.readyState === WebSocket.OPEN) return connected ? (pending ? "Spawning" : "Ready") : "Verifying";
+        return "Reconnecting";
+      };
+      let tab3 = "Waiting";
+      if (this.backupReady && this.ws3Open) tab3 = "Ready";
+      else if (this.ws3 && this.ws3.readyState === WebSocket.CONNECTING) tab3 = "Connecting";
+      else if (this.ws3Open) tab3 = "Verifying";
+      else if (this.backupConnecting) tab3 = "Connecting";
+      else if (this.connected && this.connected2) tab3 = this.backupPhase || "Replacing";
+      return {
+        activeTab: Player.typeID,
+        tab1: tabStatus(this.ws, this.connected, Player._isAlive, this.pendingRespawns.has(1)),
+        tab2: tabStatus(this.ws2, this.connected2, Player._isAlive2, this.pendingRespawns.has(2)),
+        tab3,
+        standbyReady: Boolean(this.backupReady && this.ws3Open),
+        pendingPromotions: [...this.pendingPromotions],
+        ws3: this.ws3 ? { readyState: this.ws3.readyState, open: this.ws3Open } : null,
+      };
+    }
+    static ["connectionStatus"]() {
+      const status = this.statusSnapshot();
+      let hud = document.getElementById("drag-plus-connection-status");
+      if (!hud && document.body) {
+        hud = document.createElement("div");
+        hud.id = "drag-plus-connection-status";
+        hud.style.cssText = "position:fixed;right:10px;top:205px;z-index:2147483000;min-width:310px;max-width:calc(100vw - 20px);box-sizing:border-box;color:#f1f1f1;background:rgba(5,5,9,.9);border:1px solid rgba(255,255,255,.22);border-radius:6px;padding:6px 8px;font:11px/1.3 Arial,sans-serif;pointer-events:auto;white-space:normal;text-align:right;text-shadow:0 1px 2px #000;box-shadow:0 4px 16px rgba(0,0,0,.28)";
+        hud.title = "Standby Tab 3 hot backup: K or /kill manually promotes it.";
+        hud.innerHTML = '<div data-dragplus-role="status" style="white-space:nowrap"></div>';
+        const stopHudEvent = event => event.stopPropagation();
+        for (const eventName of ["pointerdown", "mousedown", "mouseup", "touchstart", "touchend", "keydown", "keyup"]) {
+          hud.addEventListener(eventName, stopHudEvent);
+        }
+        document.body.appendChild(hud);
+      }
+      if (hud) {
+        hud.style.top = "205px";
+        const line = hud.querySelector('[data-dragplus-role="status"]');
+        if (line) {
+          line.textContent = "Drag+ Backup | Tab 1: " + status.tab1 + " | Tab 2: " + status.tab2 + " | Standby 3: " + status.tab3;
+        }
+      }
+      return status;
+    }
+    static ["startConnectionStatus"]() {
+      if (this.connectionStatusTimer) clearInterval(this.connectionStatusTimer);
+      this.connectionStatusTimer = setInterval(() => this.connectionStatus(), 500);
+      setTimeout(() => this.connectionStatus(), 0);
+    }
+    static ["registerKeyBindings"]() {
+      if (this.keyBindingsRegistered) return;
+      this.keyBindingsRegistered = true;
+      document.addEventListener("keydown", (event) => {
+        if (event.code !== "KeyK" || event.repeat || event.ctrlKey || event.altKey || event.metaKey) return;
+        if (event.target && event.target.matches && event.target.matches("input, textarea, select, [contenteditable='true']")) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        this.recycleActiveCell();
+      }, true);
     }
   }
   class SpamDetect {
@@ -5640,12 +5943,30 @@
     }
   }
   class PacketSender {
-    static ["init"](adx) {
+    static async ["init"](adx) {
+      if (3 !== adx) {
+        this.handleDisabledProperty(true);
+      }
       this.stopPingLoop(adx);
-      this.handleDisabledProperty(true);
       this.handshake1(adx);
-      this.handshake2(adx);
+      const ok = await this.handshake2(adx);
+      if (!ok) {
+        const target = 1 === adx ? WsConnection.ws : 2 === adx ? WsConnection.ws2 : WsConnection.ws3;
+        try {
+          target && target.close();
+        } catch (e) {}
+        return;
+      }
       this.initPingLoop(adx);
+      if (3 === adx) {
+        WsConnection.connected3 = true;
+        WsConnection.backupReady = true;
+        WsConnection.backupConnecting = false;
+        console.log("Drag+: Standby Tab 3 ready");
+        WsConnection.setBackupPhase("Ready");
+        WsConnection.pumpPromotionQueue();
+        return;
+      }
       this.accountPacketSent = false;
       Camera.isSpectating = false;
       Camera.freeSpectate = false;
@@ -5654,6 +5975,29 @@
         WsConnection.connected = true;
       } else if (2 === adx) {
         WsConnection.connected2 = true;
+      }
+      // A tab that disconnected while alive and was NOT replaced by the
+      // standby (e.g. it was still connecting) is auto-respawned now that
+      // the transport is back up.
+      if ((adx === 1 || adx === 2) && WsConnection.pendingRespawns.has(adx)) {
+        const generation = Number(WsConnection.autoRespawnGeneration || 0);
+        setTimeout(() => {
+          if (generation !== Number(WsConnection.autoRespawnGeneration || 0)) {
+            WsConnection.pendingRespawns.delete(adx);
+            WsConnection.connectionStatus();
+            return;
+          }
+          const alive = adx === 2 ? Player._isAlive2 : Player._isAlive;
+          if (!alive && this.chekConnection(adx)) {
+            this.spawnTab(adx);
+          }
+          WsConnection.pendingRespawns.delete(adx);
+          WsConnection.connectionStatus();
+        }, 180);
+      }
+      if (WsConnection.connected && WsConnection.connected2) {
+        this.handleDisabledProperty(false);
+        WsConnection.scheduleBackup();
       }
     }
     static ["handleDisabledProperty"](du) {
@@ -5681,19 +6025,23 @@
         this[key] = null;
       }
     }
+    static ["stopAllPingLoops"]() {
+      [1, 2, 3].forEach((slot) => this.stopPingLoop(slot));
+    }
     static ["handshake1"](ahn) {
       const px = new Uint8Array([255, 0, 0]);
       WsConnection.send(px, ahn);
     }
     static async ["handshake2"](oq) {
       if (3 !== oq && WsConnection.connected && WsConnection.connected2) {
-        return;
+        return true;
       }
       var add;
       try {
         add = await WsConnection.getToken(oq);
       } catch (nb) {
-        return console.log("Multibox: failed to get captcha token for tab " + oq + ":", nb);
+        console.log("Multibox: failed to get captcha token for tab " + oq + ":", nb);
+        return false;
       }
       var fj = new DataView(new ArrayBuffer(add.length + 3));
       var ip = 0;
@@ -5702,6 +6050,14 @@
       add.split("").forEach((cw) => fj.setUint8(ip++, cw.charCodeAt(0)));
       fj.setUint8(ip++, 0);
       WsConnection.send(fj.buffer, oq);
+      return true;
+    }
+    // The standby tab is transport-only: it must never spawn a visible cell.
+    static ["spawnTab"](tab) {
+      tab = Number(tab);
+      if (tab !== 1 && tab !== 2) return false;
+      this.spawn(tab);
+      return true;
     }
     static ["mouse"](afk, u) {
       const afj = Player.typeID;
@@ -5714,6 +6070,11 @@
       }
     }
     static ["chat"](am, jj = Player.typeID) {
+      const command = String(am || "").trim().toLowerCase();
+      if (command === "/kill" || command === "/recycle") {
+        WsConnection.recycleActiveCell();
+        return;
+      }
       if (this.chekConnection(jj)) {
         const gh = unescape(encodeURIComponent(am));
         const ex = this.createView(6 + gh.length);
