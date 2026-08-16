@@ -251,7 +251,6 @@
     split16Key: "Split 64",
     stopKey: "Stop cell movement",
     chatKey: "Toggle chat",
-    privateChatKey: "Toggle private chat",
     freeSpectateKey: "Toggle spectate mode",
     toggleSplitRings: "Toggle split rings",
     toggleOpponentRings: "Toggle opponent rings",
@@ -845,7 +844,6 @@
       this.split16Key = Storage.get("hotkeys", "split16Key") || "G";
       this.stopKey = Storage.get("hotkeys", "stopKey") || "S";
       this.chatKey = Storage.get("hotkeys", "chatKey") || "ENTER";
-      this.privateChatKey = Storage.get("hotkeys", "privateChatKey") || "ALT+0";
       this.freeSpectateKey = Storage.get("hotkeys", "freeSpectateKey") || "Q";
       this.toggleSplitRings = Storage.get("hotkeys", "toggleSplitRings") || "U";
       this.toggleOpponentRings = Storage.get("hotkeys", "toggleOpponentRings") || "I";
@@ -908,9 +906,6 @@
       ) {
         if (hj === this.chatKey) {
           return void Actions.chat(1);
-        }
-        if (hj === this.privateChatKey) {
-          return void Actions.chat(2);
         }
         if (!ChatInput.isFocused) {
           if (hj === this.toggleMenuKey) {
@@ -1028,8 +1023,6 @@
         afo = "stopKey";
       } else if (pe === this.chatKey) {
         afo = "chatKey";
-      } else if (pe === this.privateChatKey) {
-        afo = "privateChatKey";
       } else if (pe === this.toggleSplitRings) {
         afo = "toggleSplitRings";
       } else if (pe === this.toggleOpponentRings) {
@@ -1499,7 +1492,6 @@
         mc = mc.replace("%sector%", uv);
       }
       PacketSender.chat(mc);
-      RelaySender.chat(2, mc);
     }
     static ["setZoom"](yh) {
       Camera.targetViewport = yh;
@@ -2530,9 +2522,7 @@
         ajp.remove();
       });
       this.chatroomdiv.append(ajp);
-      if (1 === ChatInput.currentMode) {
-        this.chatroomdiv.scrollTop(this.chatroomdiv[0].scrollHeight);
-      }
+      this.chatroomdiv.scrollTop(this.chatroomdiv[0].scrollHeight);
     }
     static ["append"](jf) {
       const td = $(jf);
@@ -2572,18 +2562,7 @@
           "</span></div>",
       );
       this.chatroomdiv.append(aap);
-      // Only auto-scroll the mode being viewed - a private message must not
-      // yank the game chat's scroll position (and vice versa). Unread
-      // private messages light up the Private Chat button in red instead.
-      if ("private" === xo) {
-        if (2 !== ChatInput.currentMode) {
-          $("#chat-mode-switch .chat-mode-btn[data-mode='2']").addClass("unread");
-        } else {
-          this.chatroomdiv.scrollTop(this.chatroomdiv[0].scrollHeight);
-        }
-      } else if (1 === ChatInput.currentMode) {
-        this.chatroomdiv.scrollTop(this.chatroomdiv[0].scrollHeight);
-      }
+      this.chatroomdiv.scrollTop(this.chatroomdiv[0].scrollHeight);
       return aap;
     }
   }
@@ -2936,98 +2915,48 @@
   }
   class ChatInput {
     static ["init"]() {
-      this.containerType = null;
       this.container = $("#message-hud");
       this.input = $("#message");
       this.isOpened = false;
       this.isFocused = false;
-      this.modeButtons = $("#chat-mode-switch .chat-mode-btn");
-      this.currentMode = 1;
-      this.modeScrolls = { 1: 0, 2: 0 };
       this.input.blur(() => {
         this.isFocused = false;
       });
       this.input.focus(() => {
         this.isFocused = true;
       });
-      // Shift+Enter sends while typing (works for whichever mode - public
-      // or private - is currently open), instead of having to reach back
-      // for the private-chat hotkey again mid-message. enter() reads the
-      // active mode straight off the input's own "type" attribute once
-      // isOpened+isFocused are both already true, so the argument here is
-      // never actually used - it only matters for the "not open yet" branch.
-      // stopPropagation() is required, not optional: Actions.getKey()
+      // Shift+Enter sends while typing instead of the plain-Enter chatKey
+      // binding. stopPropagation() is required, not optional: Actions.getKey()
       // never checks shiftKey, so plain Enter and Shift+Enter both produce
       // the exact same "ENTER" string - which is this game's default
       // chatKey binding. Without stopping it here, this same keydown would
       // also bubble up to that global document-level hotkey handler right
-      // after send() has already closed the box, and re-open it again in
-      // public mode.
+      // after send() has already closed the box, and re-open it again.
       this.input.keydown((me) => {
-        // keyCode/which, not .key: matches Actions.getKey()'s own
-        // convention elsewhere in this file - whatever jQuery version this
-        // bundles doesn't reliably normalize .key for keyboard events, so
-        // checking it here was silently never matching.
         const ta = me.keyCode || me.which;
         if (me.shiftKey && 13 === ta) {
           me.preventDefault();
           me.stopPropagation();
-          this.enter(this.containerType);
+          this.enter();
         }
-      });
-      this.modeButtons.click((zh) => {
-        const dh = +$(zh.currentTarget).attr("data-mode");
-        this.open(dh);
       });
       this.chatroom = $("#chatroom");
       this.chatroom.perfectScrollbar();
-      this.updateModeUI(1);
     }
-    static ["updateModeUI"](tg) {
-      // Remember each mode's own scroll position so game/private chat
-      // scrolling stays fully independent - switching modes restores the
-      // other mode's position instead of sharing one joint scrollbar.
-      if (this.chatroom && this.currentMode) {
-        this.modeScrolls[this.currentMode] = this.chatroom[0].scrollTop;
-      }
-      this.currentMode = tg;
-      this.modeButtons.each((ml, afy) => {
-        const dz = $(afy);
-        dz.toggleClass("active", +dz.attr("data-mode") === +tg);
-      });
-      this.container.toggleClass("mode-private", 2 == tg);
-      this.input.attr("placeholder", 2 == tg ? "Private chat message (teammates only)..." : "Enter chat message...");
-      // filter the chatroom log itself so each mode only shows its own
-      // messages ("system" rows - connection/captcha/etc notices - stay
-      // visible in both, see the CSS rules for #chatroom.chat-view-*).
-      this.chatroom.toggleClass("chat-view-game", 1 == tg);
-      this.chatroom.toggleClass("chat-view-private", 2 == tg);
-      if (2 === tg) {
-        this.modeButtons.filter('[data-mode="2"]').removeClass("unread");
-      }
-      this.chatroom.scrollTop(this.modeScrolls[tg] || 0);
-    }
-    static ["open"](ls) {
+    static ["open"]() {
       this.container.show();
       this.isOpened = true;
       this.input.focus();
-      this.input.attr("type", ls);
-      this.updateModeUI(ls);
     }
-    static ["enter"](ls) {
+    static ["enter"]() {
       if (this.isOpened) {
         if (this.isFocused) {
-          this.containerType = this.input.attr("type");
           let afp = this.input.val();
           if (0 < afp.length && 100 < afp.length) {
             afp = afp.substring(0, 100);
           }
           if (0 < afp.length) {
-            if (1 == this.containerType) {
-              PacketSender.chat(afp);
-            } else if (2 == this.containerType) {
-              RelaySender.chat(1, afp);
-            }
+            PacketSender.chat(afp);
           }
           this.input.val("");
           this.input.blur();
@@ -3037,7 +2966,7 @@
           this.input.focus();
         }
       } else {
-        this.open(ls);
+        this.open();
       }
     }
   }
@@ -6201,12 +6130,6 @@
       this.privateRoom = Storage.get("multibox", "privateRoom") || this.generateCode(16);
       Storage.set("multibox", "privateRoom", this.privateRoom);
       this.room = this.computeRoom();
-      // reqId -> retry timer, for sendReliable()'s ack tracking (opcode 65
-      // out / 6 in - see relay-server.js). A plain incrementing counter is
-      // fine: it only needs to be unique among *currently in-flight*
-      // reliable sends, not globally.
-      this.pendingAcks = new Map();
-      this._nextReqId = 1;
       this.reconnectAttempt = 0;
       this.reconnectTimer = null;
       this.connect();
@@ -6218,10 +6141,6 @@
         zn += ajq[0 | (Math.random() * ajq.length)];
       }
       return zn;
-    }
-    static ["nextReqId"]() {
-      this._nextReqId = (this._nextReqId + 1) & 0xffffffff;
-      return this._nextReqId;
     }
     static ["connect"]() {
       if ("undefined" === typeof WebSocket) {
@@ -6333,40 +6252,6 @@
       // fine to drop, no retry needed" rather than implying reliability.
       this.send(ar);
     }
-    static ["sendReliable"](ar, lk, sp = 3) {
-      // Delivery isn't guaranteed just because readyState says OPEN right
-      // now: a packet handed to a socket whose transport dies moments
-      // later (mid-reconnect) is simply gone, no error, no retry. This
-      // pairs with the relay server acking opcode 65 with an opcode 6
-      // reply carrying the same reqId (lk) - see relay-server.js -
-      // and resends up to a couple more times on silence, stopping early
-      // once ackReceived() fires or if this exact socket instance gets
-      // replaced by a reconnect in the meantime (a fresh connection
-      // resyncs its own state; resending a stale packet on it is pointless).
-      if (!this.isOpen()) {
-        return;
-      }
-      const dg = this.ws;
-      this.ws.send(ar);
-      if (sp > 1) {
-        const yi = setTimeout(() => {
-          this.pendingAcks.delete(lk);
-          if (this.ws === dg && this.isOpen()) {
-            this.sendReliable(ar, lk, sp - 1);
-          }
-        }, 3000);
-        this.pendingAcks.set(lk, yi);
-      } else {
-        this.pendingAcks.delete(lk);
-      }
-    }
-    static ["ackReceived"](lk) {
-      const yi = this.pendingAcks.get(lk);
-      if (yi) {
-        clearTimeout(yi);
-        this.pendingAcks.delete(lk);
-      }
-    }
     static ["onOpen"]() {
       this.connected = true;
       RelaySender.init();
@@ -6430,22 +6315,6 @@
       this.teamPlayers.set(at, ay);
       return ay;
     }
-    static ["chat"](ot, bs, rc, sl) {
-      let tb = sl || "Anonymous";
-      if (sl || ot !== this.selfID) {
-        const mi = this.teamPlayers.get(ot);
-        if (undefined !== mi) {
-          tb = mi.nick;
-        }
-      } else {
-        tb = Player.nick;
-      }
-      if (1 === bs || 3 === bs) {
-        Notifications.normal(tb, rc, "private");
-      } else if (2 == bs) {
-        Notifications.command(tb, rc, "private");
-      }
-    }
   }
   class RelayParser {
     static ["parse"](acm) {
@@ -6454,16 +6323,12 @@
       const vb = ov.readUInt8();
       if (1 === vb) {
         this.update(ov);
-      } else if (2 === vb) {
-        this.chat(ov);
       } else if (3 === vb) {
         this.commander(ov);
       } else if (4 === vb) {
         this.selfID(ov);
       } else if (5 === vb) {
         this.prePlayers(ov);
-      } else if (6 === vb) {
-        this.ack(ov);
       }
     }
     static ["update"](ri) {
@@ -6495,12 +6360,6 @@
         const abw = ri.readUInt8();
         if (1 & abw) {
           const vf = ri.readStringZeroUtf8();
-          if (2 === afb.isNew) {
-            Notifications.alert(vf, "joined the chatroom.", "private");
-            afb.isNew = 1;
-          } else if (1 === afb.isNew) {
-            Notifications.alert(afb.nick, "changed name to " + vf, "private");
-          }
           afb.nick = vf;
         }
         if (2 & abw) {
@@ -6562,17 +6421,6 @@
         ami.isRGB = vy.readUInt8();
       }
     }
-    static ["chat"](wo) {
-      const nt = wo.readUInt32();
-      const jv = wo.readUInt8();
-      const dt = wo.readStringZeroUtf8();
-      if (3 === jv) {
-        const aev = dt.split("");
-        RelayData.chat(nt, jv, aev[1], aev[0]);
-      } else {
-        RelayData.chat(nt, jv, dt);
-      }
-    }
     static ["commander"](acs) {
       // Raw world coordinates, no offset - same fix as positionMass()/
       // biggest(): WorldData.offset assumes the border is always -8000,
@@ -6592,10 +6440,6 @@
     static ["selfID"](ln) {
       const aab = ln.readUInt32();
       RelayData.selfID = aab;
-    }
-    static ["ack"](ln) {
-      const sh = ln.readUInt32();
-      RelayWs.ackReceived(sh);
     }
   }
   class RelaySender {
@@ -6735,25 +6579,6 @@
         um.setUint8(0, 32, true);
         um.setUint8(1, xk, true);
         RelayWs.send(um.buffer);
-      }
-    }
-    static ["chat"](ro, qz) {
-      if (RelayWs.connected) {
-        const ap = unescape(encodeURIComponent(qz));
-        // Opcode 65 (not 64): "chat, please ack" - reqId right after the
-        // opcode lets the relay server echo it back (opcode 6) so
-        // sendReliable() knows this exact send landed, distinct from the
-        // plain fire-and-forget opcode 64 the server also still accepts.
-        const ake = RelayWs.nextReqId();
-        const gr = this.createView(7 + ap.length);
-        gr.setUint8(0, 65, true);
-        gr.setUint32(1, ake, true);
-        gr.setUint8(5, ro, true);
-        for (let zb = ap.length; zb--; ) {
-          gr.setUint8(zb + 6, ap.charCodeAt(zb), true);
-        }
-        gr.setUint8(6 + ap.length, 0, true);
-        RelayWs.sendReliable(gr.buffer, ake);
       }
     }
     static ["commander"]() {
@@ -7152,12 +6977,22 @@
         this.skinMap.set(k2, arb);
       }
       for (const agl of RelayData.teamPlayers.values())
-        if (agl.isAlive && !agl.skin.includes("XXXXXXX")) {
-          const t1 = this.code2Url(agl.skin);
-          const t2 = agl.skin2 && !agl.skin2.includes("XXXXXXX") ? this.code2Url(agl.skin2) : t1;
-          this.skinMap.set(this.skinKey(agl.nick, agl.colorHex), t1);
+        if (agl.isAlive) {
+          const t1 = !agl.skin.includes("XXXXXXX") ? this.code2Url(agl.skin) : "";
           if (agl.skin2Color) {
-            this.skinMap.set(this.skinKey(agl.nick, agl.skin2Color), t2);
+            // No tab-2 skin: tab-1's skin doubles for tab-2 cells, mirroring
+            // the sender's own map (createSkinMap sets both its keys to the
+            // same URL when skin2 is empty). Tab-1's invalid sentinel must
+            // not swallow tab-2: a teammate with a valid tab-2 skin but no
+            // tab-1 skin still gets their tab-2 cells skinned.
+            const t2 =
+              agl.skin2 && !agl.skin2.includes("XXXXXXX") ? this.code2Url(agl.skin2) : t1;
+            if (t2) {
+              this.skinMap.set(this.skinKey(agl.nick, agl.skin2Color), t2);
+            }
+          }
+          if (t1) {
+            this.skinMap.set(this.skinKey(agl.nick, agl.colorHex), t1);
           }
         }
     }
@@ -7343,23 +7178,30 @@
       setInterval(() => {
         Mouse.send();
       }, 40);
-      // `RelaySender.positionMass()`/`aliveStatus()`/`biggest()` are otherwise
-      // only sent reactively, all from inside `RelayParser.update()` - which
-      // only runs when a relay "update" broadcast actually arrives. The
-      // relay only echoes position/alive/nick/color/skin to OTHER clients
-      // (sendToAllExcept, so you don't see a duplicate of yourself in your
-      // own roster), so with no other real teammate connected that handler
-      // never fires at all, and biggest() never gets a chance to run - the
-      // #1 position marker would then never light up, solo or not. A
-      // periodic heartbeat keeps all three fresh on the relay instead of
-      // depending on teammate traffic to trigger them.
+      // The relay re-broadcasts every update to every room member, so the
+      // heartbeat's cost scales with members × cadence. aliveStatus() is
+      // tiny (2 bytes) and still goes out on every tick to keep the
+      // server's 6s staleness purge from kicking an idle-but-connected
+      // player, while positionMass() (the heavy 9-byte one) only fires
+      // when the position/mass actually changed. biggest() stays
+      // scouting-only, same condition as before.
+      const hbPos = { x: 0, y: 0, m: 0 };
+      let hbAlive = -1;
       setInterval(() => {
         RelaySender.aliveStatus();
-        RelaySender.positionMass();
+        const x = 0 | Player.x;
+        const y = 0 | Player.y;
+        const m = Player.mass;
+        if (x !== hbPos.x || y !== hbPos.y || m !== hbPos.m) {
+          RelaySender.positionMass();
+          hbPos.x = x;
+          hbPos.y = y;
+          hbPos.m = m;
+        }
         if (Player.scouting || (!Player.isAlive && Camera.isSpectating && !Camera.freeSpectate)) {
           RelaySender.biggest();
         }
-      }, 250);
+      }, 500);
       setInterval(() => {
         this.updateRestartCountdown();
       }, 1000);
