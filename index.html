@@ -3020,20 +3020,6 @@
                 50% { box-shadow: 0 0 10px 3px rgba(255, 77, 77, 0.85); }
             }
 
-            #message-hud.mode-private #message {
-                border: 1px solid #3ba9ff !important;
-            }
-
-            /* "system" rows (connection/captcha/spam notices, untagged rows)
-           have no data-channel and always stay visible in both views. */
-            #chatroom.chat-view-game .chatroom-row[data-channel="private"] {
-                display: none;
-            }
-
-            #chatroom.chat-view-private .chatroom-row[data-channel="game"] {
-                display: none;
-            }
-
             #server-restart-countdown {
                 position: fixed;
                 right: 5px;
@@ -3069,7 +3055,6 @@
             <div id="chatroom">
                 <div id="chat-mode-switch">
                     <button type="button" class="chat-mode-btn active" data-mode="1">Game Chat</button>
-                    <button type="button" class="chat-mode-btn" data-mode="2">Private Chat</button>
                 </div>
             </div>
             <div id="stats-hud">
