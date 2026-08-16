@@ -7028,19 +7028,9 @@
       const oc = new Image();
       oc.crossOrigin = "anonymous";
       oc.onload = () => {
-        const adv = document.createElement("canvas");
-        const acz = adv.getContext("2d");
-        adv.width = 512;
-        adv.height = 512;
-        acz.beginPath();
-        acz.arc(256, 256, 256, 0, this.pi2, true);
-        acz.closePath();
-        acz.clip();
-        acz.drawImage(oc, 0, 0, 512, 512);
-        oc.onload = () => {
-          this.downloadedSkins.set(jc, oc);
-        };
-        oc.src = adv.toDataURL();
+        this.cropSkinBitmap(oc, (bit) => {
+          this.downloadedSkins.set(jc, bit);
+        });
       };
       oc.src = "./res/skins/free/" + jc.replace(/free\/|.png/g, "") + ".png";
     }
@@ -7049,21 +7039,40 @@
       const il = new Image();
       il.crossOrigin = "anonymous";
       il.onload = () => {
-        const uq = document.createElement("canvas");
-        const adp = uq.getContext("2d");
-        uq.width = 512;
-        uq.height = 512;
-        adp.beginPath();
-        adp.arc(256, 256, 256, 0, this.pi2, true);
-        adp.closePath();
-        adp.clip();
-        adp.drawImage(il, 0, 0, 512, 512);
-        il.onload = () => {
-          this.downloadedSkins.set(oa, il);
-        };
-        il.src = uq.toDataURL();
+        this.cropSkinBitmap(il, (bit) => {
+          this.downloadedSkins.set(oa, bit);
+        });
       };
       il.src = oa;
+    }
+    static ["cropSkinBitmap"](img, done) {
+      // Circular-crop + PNG encode OFF the main thread. The old canvas +
+      // toDataURL() path ran its multi-hundred-ms PNG encode synchronously on
+      // the render thread whenever a skin image finished loading - and that
+      // load fires at arbitrary times (every respawn/color change for you,
+      // your tabs, or a skinned friend), which is exactly the recurring
+      // random ~1s freeze. OffscreenCanvas rasterizes in a worker thread;
+      // drawImage accepts the resulting ImageBitmap directly.
+      if ("undefined" === typeof OffscreenCanvas) {
+        done(null);
+        return;
+      }
+      try {
+        const adv = new OffscreenCanvas(512, 512);
+        const acz = adv.getContext("2d");
+        acz.beginPath();
+        acz.arc(256, 256, 256, 0, 2 * Math.PI, true);
+        acz.closePath();
+        acz.clip();
+        acz.drawImage(img, 0, 0, 512, 512);
+        adv
+          .convertToBlob({ type: "image/png" })
+          .then((blob) => createImageBitmap(blob))
+          .then(done)
+          .catch(() => done(null));
+      } catch (e) {
+        done(null);
+      }
     }
     static ["getImgurCode"](ajz) {
       if (!ajz) {
