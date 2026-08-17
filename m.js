@@ -6117,7 +6117,7 @@
       // pointed at a self-signed cert, open that URL once directly in this
       // browser first and click through the "not secure" warning,
       // otherwise this will never connect.
-      this.url = "wss://drag-ex-relay.maamargasouma.workers.dev";
+      this.url = "wss://157.180.84.143:8443";
       // The relay is a single shared deployment - everyone who connects
       // without a room ends up seeing everyone else. Tab 1 + tab 2 share
       // one relay connection (see RelaySender), so a private per-browser room
